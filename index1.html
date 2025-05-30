@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Tests Online v2</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: #fff;
+            padding: 25px 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .screen {
+            display: none;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            margin-top: 20px;
+            border-radius: 5px;
+            background-color: #fdfdfd;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 2em;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="checkbox"],
+        select {
+            width: calc(100% - 22px);
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        form label input[type="checkbox"] + span {
+            vertical-align: middle;
+        }
+
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+
+        #userInfoForm button[type="submit"] {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        #alternativesContainer div {
+            margin-bottom: 12px;
+            padding: 12px;
+            border: 1px solid #ecf0f1;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f9f9f9;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #alternativesContainer div:hover {
+            background-color: #e9ecef;
+        }
+        #alternativesContainer div.selected {
+            background-color: #e0f2fe;
+            border-color: #7dc3f2;
+            font-weight: bold;
+        }
+        #alternativesContainer div input[type="radio"] {
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        #alternativesContainer div label {
+            font-weight: normal;
+            color: #333;
+            vertical-align: middle;
+            cursor: pointer;
+            display: inline;
+        }
+
+        #proctoringWarnings {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        #proctoringWarnings p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        #proctoringWarnings.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        #proctoringWarnings.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+
+        #proctoringSnapshots {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        #proctoringSnapshots img {
+            max-width: 120px;
+            height: auto;
+            margin: 5px;
+            border: 2px solid #ddd;
+            border-radius: 3px;
+        }
+        #webcamFeed {
+            display: block;
+            margin: 10px auto;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            background-color: #333;
+        }
+        #proctoringInfo {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 10px;
+            text-align: center;
+        }
+        #loadingMessage {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #555;
+        }
+        #sectionResultsList {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #sectionResultsList li {
+            background-color: #f9f9f9;
+            padding: 8px 12px;
+            border: 1px solid #eee;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+        #generalResult {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Plataforma de Tests Online</h1>
+
+        <!-- Pantalla de Declaración -->
+        <div id="declarationScreen" class="screen active">
+            <h2>Declaración de Honestidad</h2>
+            <p>Declaro que realizaré este test sin ayuda externa, consultando únicamente mis propios conocimientos. Entiendo que cualquier intento de fraude puede invalidar mis resultados.</p>
+            <label>
+                <input type="checkbox" id="acceptDeclaration"> <span>Acepto las condiciones.</span>
+            </label>
+            <button id="startRegistrationBtn" disabled>Continuar</button>
+        </div>
+
+        <!-- Pantalla de Información del Usuario -->
+        <div id="userInfoScreen" class="screen">
+            <h2>Información Personal</h2>
+            <form id="userInfoForm">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" required>
+
+                <label for="apellido">Apellido:</label>
+                <input type="text" id="apellido" name="apellido" required>
+
+                <label for="rut">RUT (ej: 12345678-9):</label>
+                <input type="text" id="rut" name="rut" pattern="\d{7,8}-[\dkK]" title="Formato: 12345678-9 o 1234567-K" required>
+
+                <label for="correo">Correo Electrónico:</label>
+                <input type="email" id="correo" name="correo" required>
+
+                <button type="submit">Seleccionar Test</button>
+            </form>
+        </div>
+
+        <!-- Pantalla de Selección de Test -->
+        <div id="testSelectionScreen" class="screen">
+            <h2>Selecciona un Test</h2>
+            <div id="proctoringSetup">
+                <p>Para asegurar la integridad del test, activaremos tu cámara. Por favor, otorga los permisos necesarios cuando se soliciten.</p>
+                <button id="activateCameraButton">Activar Cámara</button>
+                <video id="webcamFeed" width="320" height="240" autoplay playsinline style="display:none;"></video>
+                <canvas id="photoCanvas" style="display:none;"></canvas>
+                <p id="proctoringInfo"></p>
+            </div>
+            <label for="testSelector">Test disponible:</label>
+            <select id="testSelector">
+                <option value="">Cargando tests...</option>
+            </select>
+            <button id="startTestBtn" disabled>Comenzar Test</button>
+            <div id="loadingMessage" style="display:none;">Cargando datos del test...</div>
+        </div>
+
+        <!-- Pantalla del Test -->
+        <div id="quizScreen" class="screen">
+            <h2 id="testTitle"></h2>
+            <p id="questionProgress"></p>
+            <div id="questionArea">
+                <h3 id="questionText"></h3>
+                <div id="alternativesContainer"></div>
+            </div>
+            <button id="nextQuestionBtn">Siguiente</button>
+            <p id="proctoringQuizInfo" style="font-size: 0.8em; color: #555; margin-top: 20px; text-align:center;"></p>
+            <div id="proctoringSnapshots" style="display:none; text-align: center;">
+                <h4>Snapshots de Supervisión:</h4>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="resultsScreen" class="screen">
+            <h2>Resultados del Test</h2>
+            <div id="proctoringWarnings"></div>
+            <h3>Resultados por Sección:</h3>
+            <ul id="sectionResultsList"></ul>
+            <h3>Resultado General:</h3>
+            <p id="generalResult"></p>
+            <button id="restartBtn">Realizar otro Test</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- URL del Google Sheet Combinado (Publicado como CSV) ---
+            // La URL original en el código que se proporcionó era:
+            // const URL_CSV_DATA_ORIGINAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSTsKS_7KBdbIl7GHErV9cDHl4SfYzlgnupADFviHjH99kEzZZqwMMsWX3_Au9BPgywkLPAtwEroJoV/pub?gid=1018041505&single=true&output=csv';
+            // Esta URL apuntaba a un CSV sin la columna 'ID Pregunta', lo que causaba el problema.
+            // La nueva URL proporcionada por el usuario en la descripción del problema es:
+            const URL_CSV_DATA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTHJjhOKvv8xVZegxxc6c6ZGqWJuZBza_zN0ex6ezOoP19dwHQkxFl4GlG-aW4B9dXvq2OzroP4r9Ue/pub?gid=1063860146&single=true&output=csv';
+            // Esta URL sirve un CSV con el formato esperado por el código (incluyendo 'ID Pregunta').
+
+            // --- Elementos del DOM (sin cambios) ---
+            const screens = {
+                declaration: document.getElementById('declarationScreen'),
+                userInfo: document.getElementById('userInfoScreen'),
+                testSelection: document.getElementById('testSelectionScreen'),
+                quiz: document.getElementById('quizScreen'),
+                results: document.getElementById('resultsScreen')
+            };
+            const acceptDeclarationCheckbox = document.getElementById('acceptDeclaration');
+            const startRegistrationBtn = document.getElementById('startRegistrationBtn');
+            const userInfoForm = document.getElementById('userInfoForm');
+            const nombreInput = document.getElementById('nombre');
+            const apellidoInput = document.getElementById('apellido');
+            const rutInput = document.getElementById('rut');
+            const correoInput = document.getElementById('correo');
+            const testSelector = document.getElementById('testSelector');
+            const startTestBtn = document.getElementById('startTestBtn');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const activateCameraButton = document.getElementById('activateCameraButton');
+            const webcamFeed = document.getElementById('webcamFeed');
+            const photoCanvas = document.getElementById('photoCanvas');
+            const proctoringInfo = document.getElementById('proctoringInfo');
+            const proctoringQuizInfo = document.getElementById('proctoringQuizInfo');
+            const proctoringSnapshotsContainer = document.getElementById('proctoringSnapshots');
+            const testTitle = document.getElementById('testTitle');
+            const questionProgress = document.getElementById('questionProgress');
+            const questionText = document.getElementById('questionText');
+            const alternativesContainer = document.getElementById('alternativesContainer');
+            const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+            const proctoringWarningsDiv = document.getElementById('proctoringWarnings');
+            const sectionResultsList = document.getElementById('sectionResultsList');
+            const generalResult = document.getElementById('generalResult');
+            const restartBtn = document.getElementById('restartBtn');
+
+            // --- Estado de la Aplicación (sin cambios en estructura) ---
+            let allTestData = {}; 
+            let currentUser = {};
+            let selectedTestName = '';
+            let currentQuestions = [];
+            let currentQuestionIndex = 0;
+            let userAnswers = []; 
+            let proctoringInterval = null;
+            let proctoringData = {
+                photos: [],
+                keyboardDetected: false, 
+                multipleFacesDetected: false, 
+                cameraActive: false,
+                cameraStream: null
+            };
+            const PHOTO_INTERVAL = 30000; // 30 segundos
+
+            function showScreen(screenName) {
+                Object.values(screens).forEach(screen => screen.classList.remove('active'));
+                if (screens[screenName]) {
+                    screens[screenName].classList.add('active');
+                } else {
+                    console.error("Pantalla no encontrada:", screenName);
+                }
+            }
+
+            async function fetchData(url) {
+                try {
+                    const response = await fetch(url, { cache: 'no-store' });
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status} para ${url}`);
+                    }
+                    const csvText = await response.text();
+                    return parseCSV(csvText);
+                } catch (error) {
+                    console.error('Error al cargar datos CSV:', error);
+                    alert(`Error crítico al cargar los datos del test. Por favor, revisa la consola (F12) y verifica la URL pública del CSV: ${url}.\nDetalles: ${error.message}`);
+                    return [];
+                }
+            }
+
+            function parseCSV(csvText) {
+                const lines = csvText.trim().split(/\r\n|\n/);
+                if (lines.length < 2) return []; 
+                
+                const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                
+                return lines.slice(1).map(line => {
+                    const values = [];
+                    const regex = /"(?:[^"]|"")*"|[^,]+/g;
+                    let match;
+                    while ((match = regex.exec(line)) !== null) {
+                        let value = match[0];
+                        if (value.startsWith('"') && value.endsWith('"')) {
+                            value = value.substring(1, value.length - 1).replace(/""/g, '"');
+                        }
+                        values.push(value.trim());
+                    }
+
+                    const obj = {};
+                    headers.forEach((header, i) => {
+                        obj[header] = values[i] || '';
+                    });
+                    return obj;
+                });
+            }
+            
+            async function loadAllData() {
+                loadingMessage.textContent = "Cargando datos del test...";
+                loadingMessage.style.display = 'block';
+                testSelector.innerHTML = '<option value="">Cargando tests...</option>';
+                startTestBtn.disabled = true;
+
+                console.log("Cargando datos desde:", URL_CSV_DATA);
+                const rawData = await fetchData(URL_CSV_DATA);
+
+                loadingMessage.style.display = 'none';
+
+                if (!rawData || rawData.length === 0) {
+                    testSelector.innerHTML = '<option value="">Error al cargar tests</option>';
+                    console.error("No se pudieron cargar los datos del test o el CSV está vacío. Verifica la URL y el contenido del CSV.");
+                    if (rawData && rawData.length === 0) { 
+                         alert("Los datos del test se cargaron pero el archivo CSV parece estar vacío o no contiene filas de datos válidas. Por favor, verifica el contenido del archivo en la URL configurada.");
+                    }
+                    // La alerta de error de red ya se muestra en fetchData
+                    return;
+                }
+                
+                const questionsMap = new Map(); 
+
+                rawData.forEach(row => {
+                    const testName = row.Test ? row.Test.trim() : null;
+                    const sectionName = row.Sección ? row.Sección.trim() : null;
+                    // La URL actualizada (URL_CSV_DATA) provee 'ID Pregunta'
+                    const idPregunta = row['ID Pregunta'] ? row['ID Pregunta'].trim() : null; 
+                    const preguntaText = row.Pregunta ? row.Pregunta.trim() : null;
+                    // La URL actualizada provee 'Alternativa'
+                    const alternativaText = row.Alternativa ? row.Alternativa.trim() : null; 
+                    // La URL actualizada provee 'Correcta' con valores 'Sí' o 'No'
+                    const correctaText = row.Correcta ? row.Correcta.trim().toLowerCase() : null; 
+
+                    if (!testName || !sectionName || !idPregunta || !preguntaText || !alternativaText || !correctaText) {
+                        console.warn("Fila de datos incompleta en CSV (puede faltar 'ID Pregunta', 'Alternativa', 'Test', 'Sección', 'Pregunta' o 'Correcta'), saltando fila:", row);
+                        return;
+                    }
+
+                    if (!questionsMap.has(idPregunta)) {
+                        questionsMap.set(idPregunta, {
+                            id: idPregunta,
+                            text: preguntaText,
+                            section: sectionName,
+                            test: testName, 
+                            alternatives: []
+                        });
+                    }
+
+                    questionsMap.get(idPregunta).alternatives.push({
+                        text: alternativaText,
+                        // 'Sí'/'No' en CSV se convierte a 'sí'/'no' por toLowerCase()
+                        correct: correctaText === 'sí' 
+                    });
+                });
+
+                allTestData = {};
+                questionsMap.forEach(questionData => {
+                    const testName = questionData.test;
+                    if (!allTestData[testName]) {
+                        allTestData[testName] = { sections: {}, questionsOrder: [] };
+                    }
+                    if (!allTestData[testName].sections[questionData.section]) {
+                        allTestData[testName].sections[questionData.section] = [];
+                    }
+                    
+                    const finalQuestionObject = {
+                        id: questionData.id,
+                        text: questionData.text,
+                        section: questionData.section,
+                        alternatives: questionData.alternatives
+                    };
+
+                    allTestData[testName].sections[questionData.section].push(finalQuestionObject);
+                    // Asegurar que cada pregunta se añade solo una vez a questionsOrder
+                    if (!allTestData[testName].questionsOrder.find(q => q.id === finalQuestionObject.id)) {
+                        allTestData[testName].questionsOrder.push(finalQuestionObject);
+                    }
+                });
+                
+                populateTestSelector();
+            }
+
+            function populateTestSelector() {
+                testSelector.innerHTML = '<option value="">-- Selecciona un Test --</option>';
+                if (Object.keys(allTestData).length === 0) {
+                    testSelector.innerHTML = '<option value="">No hay tests disponibles</option>';
+                    console.warn("allTestData está vacío después de procesar el CSV. No se pueden poblar los tests. Verifica que el CSV no esté vacío y que las filas tengan el formato correcto (incluyendo 'ID Pregunta').");
+                    return;
+                }
+
+                Object.keys(allTestData).forEach(testName => {
+                    if (allTestData[testName] && allTestData[testName].questionsOrder && allTestData[testName].questionsOrder.length > 0) {
+                        const hasValidQuestions = allTestData[testName].questionsOrder.some(q => q.alternatives && q.alternatives.length > 0);
+                        if (hasValidQuestions) {
+                            const option = document.createElement('option');
+                            option.value = testName;
+                            option.textContent = testName;
+                            testSelector.appendChild(option);
+                        } else {
+                             console.warn(`Test "${testName}" filtrado porque sus preguntas no tienen alternativas válidas después del procesamiento.`);
+                        }
+                    } else {
+                         console.warn(`Test "${testName}" no tiene una estructura válida en allTestData (falta questionsOrder o está vacío).`);
+                    }
+                });
+                updateStartTestButtonState();
+            }
+
+            async function activateCamera() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert("Tu navegador no soporta acceso a la cámara.");
+                    proctoringInfo.textContent = "Cámara no soportada.";
+                    return false;
+                }
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    proctoringData.cameraStream = stream;
+                    webcamFeed.srcObject = stream;
+                    webcamFeed.style.display = 'block';
+                    proctoringInfo.textContent = "Cámara activada. Preparada para supervisión.";
+                    proctoringData.cameraActive = true;
+                    activateCameraButton.disabled = true;
+                    activateCameraButton.textContent = "Cámara Activada";
+                    updateStartTestButtonState();
+                    return true;
+                } catch (err) {
+                    console.error("Error al acceder a la cámara:", err);
+                    if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                        alert("Permiso para acceder a la cámara denegado. La supervisión no estará activa.");
+                        proctoringInfo.textContent = "Permiso de cámara denegado.";
+                    } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+                        alert("No se encontró una cámara conectada.");
+                        proctoringInfo.textContent = "No se encontró cámara.";
+                    } else {
+                        alert("No se pudo acceder a la cámara. La supervisión no estará activa.");
+                        proctoringInfo.textContent = "Error al activar cámara.";
+                    }
+                    proctoringData.cameraActive = false;
+                    activateCameraButton.disabled = false; 
+                    activateCameraButton.textContent = "Activar Cámara (Reintentar)";
+                    updateStartTestButtonState();
+                    return false;
+                }
+            }
+
+            function takeSnapshot() {
+                if (!proctoringData.cameraActive || !webcamFeed.srcObject || webcamFeed.readyState < webcamFeed.HAVE_METADATA) return;
+
+                const video = webcamFeed;
+                const canvas = photoCanvas;
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                if (canvas.width === 0 || canvas.height === 0) {
+                    console.warn("Dimensiones del video no disponibles para snapshot (videoWidth o videoHeight es 0).");
+                    return; 
+                }
+
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                proctoringData.photos.push(dataUrl);
+                
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                proctoringSnapshotsContainer.appendChild(img);
+                if (proctoringSnapshotsContainer.children.length > 1 && proctoringSnapshotsContainer.style.display === 'none') { // El primer hijo es <h4>
+                     proctoringSnapshotsContainer.style.display = 'block';
+                }
+                
+                console.log(`Snapshot tomado a las ${new Date().toLocaleTimeString()}`);
+
+                // Simulación de detección de irregularidades
+                if (Math.random() < 0.05) proctoringData.keyboardDetected = true;
+                if (Math.random() < 0.03) proctoringData.multipleFacesDetected = true;
+            }
+
+            function startProctoringSession() {
+                proctoringData.photos = [];
+                proctoringData.keyboardDetected = false;
+                proctoringData.multipleFacesDetected = false;
+                proctoringSnapshotsContainer.innerHTML = '<h4>Snapshots de Supervisión:</h4>'; // Resetear solo contenido, mantener el título
+                proctoringSnapshotsContainer.style.display = 'none'; 
+
+                if (proctoringData.cameraActive) {
+                    takeSnapshot(); // Tomar una foto inicial
+                    proctoringInterval = setInterval(takeSnapshot, PHOTO_INTERVAL);
+                    proctoringQuizInfo.textContent = "Supervisión activa. Se están tomando fotos periódicamente.";
+                } else {
+                    proctoringQuizInfo.textContent = "Supervisión con cámara no activa.";
+                }
+            }
+
+            function stopProctoringSession() {
+                if (proctoringInterval) {
+                    clearInterval(proctoringInterval);
+                    proctoringInterval = null;
+                }
+                proctoringQuizInfo.textContent = "Supervisión finalizada para este test.";
+            }
+
+            function updateStartTestButtonState() {
+                const testSelected = testSelector.value !== "";
+                const cameraReady = proctoringData.cameraActive;
+
+                startTestBtn.disabled = !(testSelected && cameraReady);
+
+                if (testSelected && !cameraReady) {
+                    if(proctoringInfo.textContent !== "Permiso de cámara denegado." && proctoringInfo.textContent !== "No se encontró cámara."){
+                       proctoringInfo.textContent = "Debes activar la cámara para iniciar el test.";
+                    }
+                } else if (testSelected && cameraReady) {
+                     proctoringInfo.textContent = "Cámara activada. Lista para el test.";
+                } else if (!testSelected && cameraReady) {
+                    proctoringInfo.textContent = "Cámara activada. Selecciona un test.";
+                } else if (!testSelected && !cameraReady) {
+                     if (activateCameraButton.disabled && proctoringData.cameraStream) { // Cámara se activó pero luego se detuvo o hubo error
+                        proctoringInfo.textContent = "Cámara activada. Selecciona un test.";
+                     } else if (!activateCameraButton.disabled) { // Botón "Activar Cámara" está habilitado
+                        proctoringInfo.textContent = "Activa la cámara y selecciona un test.";
+                     } else {
+                        // Estado inicial o error no manejado explícitamente
+                        proctoringInfo.textContent = ""; 
+                     }
+                }
+            }
+
+            function startSelectedTest() {
+                selectedTestName = testSelector.value;
+                if (!selectedTestName || !allTestData[selectedTestName]) {
+                    alert("Por favor, selecciona un test válido.");
+                    return;
+                }
+
+                if (!proctoringData.cameraActive) {
+                    const confirmNoCamera = confirm("La cámara no está activa. ¿Deseas continuar el test sin supervisión por cámara?");
+                    if (!confirmNoCamera) {
+                        return;
+                    }
+                }
+
+                loadingMessage.textContent = "Iniciando test...";
+                loadingMessage.style.display = 'block';
+                startTestBtn.disabled = true;
+
+                setTimeout(() => {
+                    currentQuestions = [...allTestData[selectedTestName].questionsOrder.filter(q => q.alternatives && q.alternatives.length > 0)];
+                    
+                    if (currentQuestions.length === 0) {
+                        alert(`El test "${selectedTestName}" no tiene preguntas válidas con alternativas. Por favor, revisa la configuración del test en el CSV.`);
+                        loadingMessage.style.display = 'none';
+                        updateStartTestButtonState(); 
+                        return;
+                    }
+
+                    currentQuestionIndex = 0;
+                    userAnswers = [];
+                    startProctoringSession();
+                    testTitle.textContent = `Test: ${selectedTestName}`;
+                    loadQuestion();
+                    showScreen('quiz');
+                    loadingMessage.style.display = 'none';
+                }, 500);
+            }
+
+            function loadQuestion() {
+                if (currentQuestionIndex >= currentQuestions.length) {
+                    finishTest();
+                    return;
+                }
+
+                const question = currentQuestions[currentQuestionIndex];
+                questionText.innerHTML = question.text;
+                questionProgress.textContent = `Pregunta ${currentQuestionIndex + 1} de ${currentQuestions.length} (Sección: ${question.section})`;
+                alternativesContainer.innerHTML = '';
+
+                const shuffledAlternatives = [...question.alternatives].sort(() => Math.random() - 0.5);
+
+                shuffledAlternatives.forEach((alt, index) => {
+                    const altDiv = document.createElement('div');
+                    altDiv.classList.add('alternative-item');
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = 'alternative';
+                    radio.id = `alt-${index}`;
+                    radio.value = alt.text; 
+                    const label = document.createElement('label');
+                    label.htmlFor = `alt-${index}`;
+                    label.innerHTML = alt.text;
+                    altDiv.appendChild(radio);
+                    altDiv.appendChild(label);
+                    altDiv.addEventListener('click', (e) => {
+                        if (e.target.tagName !== 'INPUT') {
+                            radio.checked = true;
+                        }
+                        alternativesContainer.querySelectorAll('.alternative-item.selected').forEach(el => el.classList.remove('selected'));
+                        altDiv.classList.add('selected');
+                    });
+                    alternativesContainer.appendChild(altDiv);
+                });
+                
+                nextQuestionBtn.textContent = (currentQuestionIndex === currentQuestions.length - 1) ? 'Finalizar Test' : 'Siguiente Pregunta';
+            }
+
+            function handleNextQuestion() {
+                const selectedRadio = alternativesContainer.querySelector('input[name="alternative"]:checked');
+                if (!selectedRadio) {
+                    alert("Por favor, selecciona una alternativa.");
+                    return;
+                }
+
+                const currentQ = currentQuestions[currentQuestionIndex];
+                const selectedAlternativeText = selectedRadio.value;
+                const selectedAlternativeObject = currentQ.alternatives.find(alt => alt.text === selectedAlternativeText);
+
+                userAnswers.push({
+                    questionId: currentQ.id,
+                    questionText: currentQ.text,
+                    section: currentQ.section,
+                    selectedAlternative: selectedAlternativeText,
+                    isCorrect: selectedAlternativeObject ? selectedAlternativeObject.correct : false,
+                    alternativesShown: currentQ.alternatives.map(a => a.text)
+                });
+
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+
+            function finishTest() {
+                stopProctoringSession();
+                calculateResults();
+                showScreen('results');
+            }
+
+            function calculateResults() {
+                const resultsBySection = {};
+                let totalCorrect = 0;
+                let totalQuestions = userAnswers.length;
+
+                userAnswers.forEach(answer => {
+                    if (!resultsBySection[answer.section]) {
+                        resultsBySection[answer.section] = { correct: 0, total: 0, name: answer.section };
+                    }
+                    resultsBySection[answer.section].total++;
+                    if (answer.isCorrect) {
+                        resultsBySection[answer.section].correct++;
+                        totalCorrect++;
+                    }
+                });
+
+                sectionResultsList.innerHTML = '';
+                for (const sectionName in resultsBySection) {
+                    const section = resultsBySection[sectionName];
+                    const percentage = section.total > 0 ? ((section.correct / section.total) * 100).toFixed(1) : 0;
+                    const li = document.createElement('li');
+                    li.textContent = `Sección "${section.name}": ${section.correct} de ${section.total} correctas (${percentage}%)`;
+                    sectionResultsList.appendChild(li);
+                }
+
+                const overallPercentage = totalQuestions > 0 ? ((totalCorrect / totalQuestions) * 100).toFixed(1) : 0;
+                generalResult.textContent = `Resultado General: ${totalCorrect} de ${totalQuestions} correctas (${overallPercentage}%)`;
+
+                proctoringWarningsDiv.innerHTML = '';
+                let warningsExist = false;
+                proctoringWarningsDiv.classList.remove('warning', 'success');
+
+                if (!proctoringData.cameraActive) {
+                    proctoringWarningsDiv.innerHTML += `<p>⚠️ La cámara no estuvo activa durante este test.</p>`;
+                    warningsExist = true;
+                } else if (proctoringData.photos.length === 0 && proctoringData.cameraActive) {
+                    proctoringWarningsDiv.innerHTML += `<p>⚠️ No se pudieron tomar fotos durante el test (cámara marcada como activa pero sin capturas efectivas).</p>`;
+                    warningsExist = true;
+                }
+
+                if (proctoringData.keyboardDetected) {
+                    proctoringWarningsDiv.innerHTML += `<p>⚠️ ALERTA SIMULADA: Se detectó posible uso excesivo del teclado.</p>`;
+                    warningsExist = true;
+                }
+                if (proctoringData.multipleFacesDetected) {
+                    proctoringWarningsDiv.innerHTML += `<p>⚠️ ALERTA SIMULADA: Se detectó la posible presencia de otra persona.</p>`;
+                    warningsExist = true;
+                }
+                
+                if (!warningsExist && proctoringData.cameraActive && proctoringData.photos.length > 0) {
+                    proctoringWarningsDiv.innerHTML = `<p>✅ Supervisión con cámara activa. No se detectaron irregularidades simuladas.</p>`;
+                    proctoringWarningsDiv.classList.add('success');
+                } else if (warningsExist) {
+                    proctoringWarningsDiv.classList.add('warning');
+                } else {
+                     proctoringWarningsDiv.innerHTML = `<p>ℹ️ Test completado.</p>`;
+                }
+            }
+
+            function resetApp() {
+                selectedTestName = '';
+                currentQuestions = [];
+                currentQuestionIndex = 0;
+                userAnswers = [];
+                
+                proctoringData.photos = []; 
+                proctoringData.keyboardDetected = false;
+                proctoringData.multipleFacesDetected = false;
+                proctoringSnapshotsContainer.innerHTML = '<h4>Snapshots de Supervisión:</h4>';
+                proctoringSnapshotsContainer.style.display = 'none';
+                
+                testSelector.value = "";
+                
+                // Si la cámara estaba activa, se mantiene activa para el siguiente test.
+                // Si se desea que el usuario la reactive siempre, descomentar las siguientes líneas:
+                /*
+                if(proctoringData.cameraStream) {
+                    proctoringData.cameraStream.getTracks().forEach(track => track.stop());
+                    proctoringData.cameraStream = null;
+                }
+                proctoringData.cameraActive = false;
+                activateCameraButton.disabled = false;
+                activateCameraButton.textContent = "Activar Cámara";
+                webcamFeed.style.display = 'none';
+                proctoringInfo.textContent = "Activa la cámara y selecciona un test.";
+                */
+
+                // Si la cámara ya está activa, solo actualizar mensaje
+                if (proctoringData.cameraActive) {
+                    proctoringInfo.textContent = "Cámara activada. Selecciona un test.";
+                } else { // Si no estaba activa (o se reseteó arriba)
+                    proctoringInfo.textContent = "Activa la cámara y selecciona un test.";
+                    activateCameraButton.disabled = false;
+                    activateCameraButton.textContent = "Activar Cámara";
+                    webcamFeed.style.display = 'none';
+                }
+
+                // Opcional: recargar datos de tests por si cambiaron en el servidor
+                // loadAllData(); 
+                
+                updateStartTestButtonState();
+                showScreen('testSelection');
+            }
+            
+            function validateRUT(rut) {
+                rut = rut.replace(/\./g, '').replace('-', '').toLowerCase();
+                if (!/^\d{7,8}[k\d]$/.test(rut)) {
+                    return false; 
+                }
+                let T = parseInt(rut.slice(0, -1));
+                let M = 0, S = 1;
+                for (; T; T = Math.floor(T / 10)) {
+                    S = (S + T % 10 * (9 - M++ % 6)) % 11;
+                }
+                const dv = S ? S - 1 : 'k';
+                return dv == rut.slice(-1);
+            }
+
+            // --- Event Listeners ---
+            acceptDeclarationCheckbox.addEventListener('change', () => {
+                startRegistrationBtn.disabled = !acceptDeclarationCheckbox.checked;
+            });
+            startRegistrationBtn.addEventListener('click', () => {
+                if (acceptDeclarationCheckbox.checked) {
+                    showScreen('userInfo');
+                }
+            });
+            userInfoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!validateRUT(rutInput.value)) {
+                    alert("El RUT ingresado no es válido (verifique el formato y el dígito verificador). Ejemplo: 12345678-9.");
+                    rutInput.focus();
+                    return;
+                }
+                currentUser = {
+                    nombre: nombreInput.value.trim(),
+                    apellido: apellidoInput.value.trim(),
+                    rut: rutInput.value,
+                    correo: correoInput.value.trim()
+                };
+                console.log("Usuario registrado:", currentUser);
+                showScreen('testSelection');
+                updateStartTestButtonState();
+            });
+            activateCameraButton.addEventListener('click', async () => {
+                await activateCamera();
+            });
+            testSelector.addEventListener('change', updateStartTestButtonState);
+            startTestBtn.addEventListener('click', startSelectedTest);
+            nextQuestionBtn.addEventListener('click', handleNextQuestion);
+            restartBtn.addEventListener('click', resetApp);
+
+            // --- Inicialización ---
+            loadAllData(); 
+            showScreen('declaration'); 
+        });
+    </script>
+</body>
+</html>
