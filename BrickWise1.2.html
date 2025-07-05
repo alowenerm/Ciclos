@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>** Brick Wise **</title>
+    
+    <link rel="icon" type="image/png" href="https://alowenerm.github.io/Ciclos/brickwise-ft.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons for Excel & Save Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- noUiSlider for range sliders -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf-autotable.umd.min.js"></script>
+
+
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .card .table-responsive { max-height: 500px; }
+        .kpi-card { text-align: center; padding: 1rem; border: 1px solid #dee2e6; border-radius: .375rem; background-color: #fff; }
+        .kpi-value { font-size: 1.5rem; font-weight: bold; }
+        .kpi-label { font-size: 0.9rem; color: #6c757d; }
+        .kpi-card.positive .kpi-value, .header-kpi.positive .header-kpi-value { color: #198754; }
+        .kpi-card.negative .kpi-value, .header-kpi.negative .header-kpi-value { color: #dc3545; }
+        tfoot { font-weight: bold; background-color: #f8f9fa; }
+        /* Forzar alineación a la derecha para todos los inputs numéricos controlados */
+        input[data-format="number"], .text-center, .text-end { text-align: right; }
+        .text-center-input, .text-center-input input { text-align: center; }
+        .calculated-field { background-color: #e9ecef; padding: 0.375rem 0.75rem; border-radius: 0.375rem; border: 1px solid #ced4da; text-align: right;}
+        .header-kpi { text-align: center; padding: 0.3rem 0.6rem; border: 1px solid #dee2e6; border-radius: .375rem; background-color: #fff; min-width: 120px; }
+        .header-kpi-value { font-size: 1.1rem; font-weight: bold; }
+        .header-kpi-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; }
+
+        /* Tab Styling */
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            margin-bottom: -1px;
+        }
+        .nav-tabs .nav-link:not(.active) {
+            background-color: #f8f9fa;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            color: #000;
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+
+        /* Estilos para la tabla de Flujo de Caja (columnas congeladas) */
+        .cashflow-table th, .cashflow-table td {
+            min-width: 110px;
+            white-space: nowrap;
+        }
+        .cashflow-table thead.sticky-top th {
+            z-index: 3;
+        }
+        .cashflow-table th:first-child, .cashflow-table td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            width: 230px; 
+            min-width: 230px;
+        }
+        .cashflow-table thead.sticky-top th:first-child {
+            z-index: 4;
+        }
+        .cashflow-table th:nth-child(2), .cashflow-table td:nth-child(2) {
+            position: sticky;
+            left: 230px; /* Debe coincidir con el ancho de la primera columna */
+            z-index: 2;
+            width: 120px;
+            min-width: 120px;
+        }
+        .cashflow-table thead.sticky-top th:nth-child(2) {
+            z-index: 4;
+        }
+        /* Fondos para que no se vea el contenido al hacer scroll */
+        .cashflow-table .table-dark th {
+             background-color: var(--bs-dark) !important;
+        }
+        .cashflow-table td:first-child, 
+        .cashflow-table td:nth-child(2) {
+             background-color: var(--bs-table-bg);
+        }
+        .table-striped > tbody > tr:nth-of-type(odd) > td:first-child,
+        .table-striped > tbody > tr:nth-of-type(odd) > td:nth-child(2) {
+             background-color: #f8f9fa; /* Color gris claro sólido para evitar transparencias */
+        }
+        .bg-light.fw-bold.text-start td {
+            background-color: var(--bs-light) !important;
+        }
+        #curvaSGraph {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        
+        /* noUiSlider Custom Styles - Simple & Professional */
+        .timeline-control .noUi-target {
+            background: #e9ecef;
+            border-radius: 4px;
+            border: none;
+            box-shadow: none;
+            height: 4px;
+        }
+        .timeline-control .noUi-connect {
+            background: #adb5bd;
+        }
+        .timeline-control .noUi-handle {
+            background: #adb5bd; /* Match connect color */
+            border: none;
+            border-radius: 50%;
+            box-shadow: none;
+            cursor: pointer;
+            width: 14px;   /* Smaller handle */
+            height: 14px;  /* Smaller handle */
+            right: -7px;   /* Adjusted position */
+            top: -5px;     /* Adjusted position */
+        }
+        .timeline-control .noUi-handle::before, .timeline-control .noUi-handle::after {
+            display: none;
+        }
+        .timeline-control .noUi-handle:focus {
+            outline: none;
+        }
+        .timeline-control-inputs { 
+            display: flex; 
+            justify-content: space-between; 
+            gap: 10px; 
+        }
+        .timeline-control-inputs input { 
+            max-width: 80px; 
+            text-align: center; 
+            font-size: 0.75rem; /* Smaller font */
+        }
+        .single-slider-input {
+            max-width: 100px !important;
+            margin: 0 auto;
+        }
+        .section-header {
+            background-color: #f8f9fa;
+            padding: 0.5rem 1rem;
+            margin: 1.5rem -1rem 1rem -1rem;
+            border-top: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-4 mb-5">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <div class="d-flex align-items-center">
+        <img src="https://alowenerm.github.io/Ciclos/brickwise-ft.png" alt="Logo" style="height: 60px;" class="me-3">
+        <h2 class="mb-0">Modelador inmobiliario</h2>
+    </div>
+    <div id="header-kpi-container" class="d-flex gap-2 justify-content-end flex-wrap">
+        <div id="header-kpi-aporte" class="header-kpi"><div class="header-kpi-label">Aporte Socios</div><div class="header-kpi-value">--</div></div>
+        <div id="header-kpi-roidi" class="header-kpi"><div class="header-kpi-label">ROI DI</div><div class="header-kpi-value">--</div></div>
+        <div id="header-kpi-udi" class="header-kpi"><div class="header-kpi-label">UDI</div><div class="header-kpi-value">--</div></div>
+        <div id="header-kpi-udivta" class="header-kpi"><div class="header-kpi-label">UDI/Vta</div><div class="header-kpi-value">--</div></div>
+        <div id="header-kpi-tir" class="header-kpi"><div class="header-kpi-label">TIR DI</div><div class="header-kpi-value">--</div></div>
+        <div id="header-kpi-van" class="header-kpi"><div class="header-kpi-label">VAN DI</div><div class="header-kpi-value">--</div></div>
+    </div>
+</div>
+        <!-- Pestañas de Navegación y Botones -->
+        <div class="d-flex justify-content-between align-items-end">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation"><button class="nav-link active" id="params-tab-btn" data-bs-toggle="tab" data-bs-target="#params" type="button" role="tab">1. Parámetros</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="eval-tab-btn" data-bs-toggle="tab" data-bs-target="#eval" type="button" role="tab">2. Evaluación</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="flow-tab-btn" data-bs-toggle="tab" data-bs-target="#flow" type="button" role="tab">3. Flujo de Caja</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="resumen-tab-btn" data-bs-toggle="tab" data-bs-target="#resumen" type="button" role="tab">4. Resumen</button></li>
+            </ul>
+            <div class="d-flex gap-2 mb-1">
+                <!-- Input oculto para la importación -->
+                <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                
+                <label for="import-file-input" id="import-model-btn" class="btn btn-outline-secondary btn-sm mb-0">
+                    <i class="bi bi-upload"></i> Importar
+                </label>
+                <button id="export-model-btn" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-download"></i> Exportar
+                </button>
+                <button id="save-model-btn" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-save"></i> Informes
+                </button>
+            </div>
+        </div>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="myTabContent">
+            <!-- PESTAÑA 1: PARÁMETROS -->
+            <div class="tab-pane fade show active p-4 border border-top-0 rounded-bottom" id="params" role="tabpanel" aria-labelledby="params-tab-btn">
+                
+                <div class="row g-4">
+                    <!-- Columna Izquierda -->
+                    <div class="col-lg-5">
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold">Configuración General del Proyecto</div>
+                            <div class="card-body">
+                                <div class="mb-3"><label for="projectName" class="form-label">Nombre del Proyecto</label><input type="text" class="form-control" id="projectName" value="Edificio Central Park"></div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label for="currency" class="form-label">Moneda</label><select class="form-select" id="currency"><option value="UF">UF</option><option value="CLP">CLP</option><option value="USD">USD</option></select></div>
+                                    <div class="col-md-6 mb-3"><label for="discountRate" class="form-label">Tasa Descuento Anual (%)</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="discountRate" value="10,00"></div>
+                                </div>
+                                <div class="row align-items-center">
+                                    <div class="col-md-4 mb-3"><label for="taxRate" class="form-label">Tasa Impuesto (%)</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="taxRate" value="27,00"></div>
+                                    <div class="col-md-4 mb-3"><label for="iva" class="form-label">IVA (%)</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="iva" value="19,00"></div>
+                                    <div class="col-md-4 mb-3"><label for="fechaInicio" class="form-label">Fecha inicio</label><input type="date" class="form-control" id="fechaInicio"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Financiamiento Bancario</span>
+                                <span id="header-total-intereses" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label for="montoFinanciamiento" class="form-label">Monto (<span data-unit="currency"></span>)</label><input type="text" class="form-control" data-format="number" id="montoFinanciamiento" value="118.000"></div>
+                                    <div class="col-md-6 mb-3"><label for="tasaInteresAnual" class="form-label">Tasa interés anual (%)</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="tasaInteresAnual" value="5,00"></div>
+                                </div>
+                                 <div class="row">
+                                    <div class="col-md-12 mb-3"><label for="cuotaAlzamiento" class="form-label">Cuota Alzamiento (% ing.)</label><input type="text" class="form-control" data-format="number" data-decimals="0" id="cuotaAlzamiento" value="90"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold">Impuestos</div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Renta (<span data-unit="currency"></span>)</label>
+                                    <div class="calculated-field" id="calculated-renta">--</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">IVA a Pagar (<span data-unit="currency"></span>)</label>
+                                    <div class="calculated-field" id="calculated-iva">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna Derecha -->
+                    <div class="col-lg-7">
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Unidades a Vender (Ingresos)</span>
+                                <span id="header-total-ventas" class="badge bg-success rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead><tr><th>Tipo</th><th>Modelo</th><th class="text-center">Cant.</th><th>Sup. (m²)</th><th>Precio (<span data-unit="currency"></span>)</th><th class="text-center">Venta/Mes (U)</th><th class="text-center">Total Venta (<span data-unit="currency"></span>)</th><th></th></tr></thead>
+                                        <tbody id="unidades-tbody"></tbody>
+                                        <tfoot>
+                                            <tr><td colspan="6" class="text-end">Total Departamentos:</td><td id="total-deptos">0</td><td></td></tr>
+                                            <tr><td colspan="6" class="text-end">Total Casas:</td><td id="total-casas">0</td><td></td></tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                <button id="add-unidad" class="btn btn-sm btn-outline-primary mt-2">+ Agregar Unidad</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Ingresos por Etapas</span>
+                                <span id="header-total-ingresos-pct" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <thead><tr><th style="width: 20%;">% Ingresos</th><th>Descripción</th><th>Mes Inicio</th><th>Mes Fin</th><th></th></tr></thead>
+                                    <tbody id="ingresos-etapas-tbody"></tbody>
+                                </table>
+                                <button id="add-ingreso-etapa" class="btn btn-sm btn-outline-primary mt-2">+ Agregar Etapa</button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4" id="terreno-card-body">
+                             <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Terreno</span>
+                                <span id="header-total-terreno" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label for="precioTerreno" class="form-label">Precio Total (<span data-unit="currency"></span>)</label><input type="text" class="form-control" data-format="number" id="precioTerreno" value="50.000"></div>
+                                    <div class="col-md-6 mb-3"><label for="superficieTerreno" class="form-label">Superficie (m²)</label><input type="text" class="form-control" data-format="number" id="superficieTerreno" value="2.500"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="valorTerrenoM2" class="form-label">Valor</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" data-format="number" data-decimals="2" id="valorTerrenoM2">
+                                            <span class="input-group-text"><span data-unit="currency"></span>/m²</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="mesCompraTerreno" class="form-label">Mes Compra Terreno</label>
+                                        <input type="number" class="form-control text-center" id="mesCompraTerreno" value="1" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Construcción</span>
+                                <span id="header-total-construccion" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body" id="construction-card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3"><label for="superficieLosaSobre" class="form-label">Sobre 0 (m²)</label><input type="text" class="form-control" data-format="number" id="superficieLosaSobre" value="4.500"></div>
+                                    <div class="col-md-4 mb-3"><label for="superficieLosaBajo" class="form-label">Bajo 0 (m²)</label><input type="text" class="form-control" data-format="number" id="superficieLosaBajo" value="1.000"></div>
+                                    <div class="col-md-4 mb-3"><label for="superficieUrbanizacion" class="form-label">Urbanización (m²)</label><input type="text" class="form-control" data-format="number" id="superficieUrbanizacion" value="800"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3"><label for="costoM2Sobre" class="form-label">Costo sobre 0</label><div class="input-group"><input type="text" class="form-control" data-format="number" data-decimals="2" id="costoM2Sobre" value="22,00"><span class="input-group-text"><span data-unit="currency"></span>/m²</span></div></div>
+                                    <div class="col-md-4 mb-3"><label for="costoM2Bajo" class="form-label">Costo bajo 0</label><div class="input-group"><input type="text" class="form-control" data-format="number" data-decimals="2" id="costoM2Bajo" value="15,00"><span class="input-group-text"><span data-unit="currency"></span>/m²</span></div></div>
+                                    <div class="col-md-4 mb-3"><label for="costoM2Urbanizacion" class="form-label">Costo urbanización</label><div class="input-group"><input type="text" class="form-control" data-format="number" data-decimals="2" id="costoM2Urbanizacion" value="5,00"><span class="input-group-text"><span data-unit="currency"></span>/m²</span></div></div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label for="porcAnticipo" class="form-label">% Anticipo</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="porcAnticipo" value="10,00"></div>
+                                    <div class="col-md-6 mb-3"><label for="porcRetencion" class="form-label">% Retención</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="porcRetencion" value="5,00"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label for="mesInicioConstruccion" class="form-label">Mes Inicio</label><input type="number" class="form-control text-center" id="mesInicioConstruccion" value="3" min="1"></div>
+                                    <div class="col-md-6 mb-3"><label for="mesTerminoConstruccion" class="form-label">Mes Término</label><input type="number" class="form-control text-center" id="mesTerminoConstruccion" value="20" min="1"></div>
+                                </div>
+                                <div class="row align-items-center">
+                                    <div class="col-12 mb-3">
+                                        <label for="curvaSParam" class="form-label">Curva S: <span id="curvaSValue">10</span></label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="range" class="form-range me-3" id="curvaSParam" min="1" max="20" step="1" value="10">
+                                            <canvas id="curvaSGraph" width="80" height="50"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Costos (% ventas)</span>
+                                <span id="header-total-costos-variables" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <thead><tr><th>Ítem</th><th>% Venta</th><th>Mes Inicio</th><th>Mes Fin</th><th>Total (<span data-unit="currency"></span>)</th><th></th></tr></thead>
+                                    <tbody id="costos-variables-tbody"></tbody>
+                                </table>
+                                <button id="add-costo-variable" class="btn btn-sm btn-outline-primary mt-2">+ Agregar</button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Costos (unidad)</span>
+                                <span id="header-total-costos-unidad" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <thead><tr><th>Ítem</th><th>Costo por unidad (<span data-unit="currency"></span>)</th><th>Mes Inicio</th><th>Mes Fin</th><th>Total (<span data-unit="currency"></span>)</th><th></th></tr></thead>
+                                    <tbody id="costos-unidad-tbody"></tbody>
+                                </table>
+                                <button id="add-costo-unidad" class="btn btn-sm btn-outline-primary mt-2">+ Agregar</button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                             <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Costos</span>
+                                <span id="header-total-costos-fijos" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <thead><tr><th>Ítem de Costo</th><th>Monto Total (<span data-unit="currency"></span>)</th><th>Mes Inicio</th><th>Mes Fin</th><th></th></tr></thead>
+                                    <tbody id="otros-costos-tbody"></tbody>
+                                </table>
+                                <button id="add-costo" class="btn btn-sm btn-outline-primary mt-2">+ Agregar Costo</button>
+                            </div>
+                        </div>
+
+                         <div class="card" id="comision-ventas-card-body">
+                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                                <span>Comisión de ventas</span>
+                                <span id="header-total-comision" class="badge bg-secondary rounded-pill"></span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3"><label for="comisionCierre" class="form-label">% Venta (Cierre)</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="comisionCierre" value="0,50"></div>
+                                    <div class="col-md-4 mb-3"><label for="comisionEscritura" class="form-label">% Venta (Escritura)</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="comisionEscritura" value="1,00"></div>
+                                    <div class="col-md-4 mb-3"><label for="comisionRecuperacion" class="form-label">% Venta (Recup.)</label><input type="text" class="form-control" data-format="number" data-decimals="2" id="comisionRecuperacion" value="0,50"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 mb-3"><label class="form-label">% Total Comisión</label><div class="calculated-field" id="totalPorcentajeComision">2,0%</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OTRAS PESTAÑAS -->
+            <div class="tab-pane fade p-4 border border-top-0 rounded-bottom" id="eval" role="tabpanel" aria-labelledby="eval-tab-btn"><div id="evaluacion-container" data-initialized="false" class="text-center p-5"><p class="text-muted">Los resultados se actualizarán automáticamente.</p></div></div>
+            <div class="tab-pane fade p-4 border border-top-0 rounded-bottom" id="flow" role="tabpanel" aria-labelledby="flow-tab-btn"><div id="flujo-caja-container" class="text-center p-5"><p class="text-muted">Los resultados se actualizarán automáticamente.</p></div></div>
+            <div class="tab-pane fade p-4 border border-top-0 rounded-bottom" id="resumen" role="tabpanel" aria-labelledby="resumen-tab-btn"><div id="resumen-container" class="text-center p-5"><p class="text-muted">Los resultados se actualizarán automáticamente.</p></div></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const paramsTab = document.getElementById('params');
+        const unidadesTbody = document.getElementById('unidades-tbody');
+        const otrosCostosTbody = document.getElementById('otros-costos-tbody');
+        const costosVariablesTbody = document.getElementById('costos-variables-tbody');
+        const costosUnidadTbody = document.getElementById('costos-unidad-tbody');
+        const ingresosEtapasTbody = document.getElementById('ingresos-etapas-tbody');
+        const currencySelect = document.getElementById('currency');
+        let charts = {};
+        let unidadCounter = 0, costoCounter = 0, costoVariableCounter = 0, costoUnidadCounter = 0, ingresoEtapaCounter = 0;
+        let simLayoutObserver = null;
+        let timelineSliders = {};
+
+        const debounce = (func, delay) => {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        };
+        
+        function updateAllOutputs() {
+            try {
+                const data = runFullCalculation();
+                if (!data) return;
+
+                const totalIntereses = data.flujo.egresos['Intereses Crédito'] ? data.flujo.egresos['Intereses Crédito'].reduce((a, b) => a + b, 0) : 0;
+                updateHeaderBadge('header-total-intereses', totalIntereses);
+                
+                updateParamTabKPIsAndCards(data.params, data.calculosInternos);
+
+                data.kpis = calculateKPIs_full(data.flujo, data.params);
+                
+                renderFinalVanTirToHeader(data.kpis);
+
+                renderAndBindTimelineControls(data.params);
+                
+                renderEvaluacion_full(data); 
+                renderFlujoTabla_full(data);
+                renderResumenTab_full(data);
+
+            } catch (error) { 
+                console.error("Error al generar el flujo y actualizar UI:", error); 
+            }
+        }
+        
+        const debouncedUpdateAllOutputs = debounce(updateAllOutputs, 500);
+
+        const parseFormattedNumber = (str) => {
+            return parseFloat(String(str).replace(/\./g, '').replace(',', '.')) || 0;
+        }
+        const formatCurrency = (value, decimals = 0) => {
+            if (isNaN(value)) return 'N/A';
+            return new Intl.NumberFormat('es-CL', { 
+                style: 'decimal', 
+                minimumFractionDigits: decimals, 
+                maximumFractionDigits: decimals 
+            }).format(value);
+        }
+        const formatPercent = (v, decimals = 1) => isNaN(v)?'N/A':`${formatCurrency(v*100, decimals)}%`;
+
+        const formatInputAsCurrency = (input) => {
+            const decimals = parseInt(input.dataset.decimals) || 0;
+            const value = parseFormattedNumber(input.value);
+            input.value = formatCurrency(value, decimals);
+        };
+        const updateHeaderBadge = (elementId, value, decimals = 0) => {
+            const badge = document.getElementById(elementId);
+            if (badge) {
+                const currency = currencySelect.value;
+                badge.textContent = `${currency} ${formatCurrency(value, decimals)}`;
+            }
+        };
+
+        function addUnidadRow(data = {}) {
+            unidadCounter++;
+            const newRow = document.createElement('tr');
+            newRow.id = `unidad-row-${unidadCounter}`;
+            newRow.innerHTML = `<td><select class="form-control form-control-sm" name="tipoUnidad">${['departamento','casa','bodega','est_sup','est_sub', 'otro'].map(t => `<option value="${t}" ${data.tipo === t ? 'selected' : ''}>${t.replace('_', '. ').replace(/\b\w/g, l => l.toUpperCase())}</option>`).join('')}</select></td><td><input type="text" class="form-control form-control-sm" name="nombreModelo" value="${data.nombre || ''}"></td><td class="text-center-input"><input type="number" class="form-control form-control-sm text-center" name="cantidadUnidades" value="${data.cantidad || 0}" min="0"></td><td class="text-center-input"><input type="text" class="form-control form-control-sm" data-format="number" data-decimals="1" name="superficieUnidad" value="${data.superficie || '0,0'}"></td><td><input type="text" class="form-control form-control-sm" data-format="number" name="precioVenta" value="${data.precio || '0'}"></td><td class="text-center-input"><input type="text" class="form-control form-control-sm" data-format="number" data-decimals="1" name="velocidadVenta" value="${data.velocidad || '0,0'}"></td><td class="total-venta-row text-end">0</td><td><button type="button" class="btn btn-sm btn-outline-secondary" onclick="removeRow('unidad-row-${unidadCounter}')">X</button></td>`;
+            unidadesTbody.appendChild(newRow);
+            newRow.querySelectorAll('[data-format="number"]').forEach(formatInputAsCurrency);
+            updateAllFastUI();
+        }
+        function addCostoRow(data = {}) {
+            costoCounter++;
+            const newRow = document.createElement('tr');
+            newRow.id = `costo-row-${costoCounter}`;
+            newRow.innerHTML = `<td><input type="text" class="form-control form-control-sm" name="itemCosto" value="${data.item || ''}"></td><td><input type="text" class="form-control form-control-sm" data-format="number" name="montoTotalCosto" value="${data.monto || '0'}"></td><td><input type="number" class="form-control form-control-sm text-center" name="mesInicioCosto" value="${data.inicio || 1}" min="1"></td><td><input type="number" class="form-control form-control-sm text-center" name="mesFinCosto" value="${data.fin || 1}" min="1"></td><td><button type="button" class="btn btn-sm btn-outline-secondary" onclick="removeRow('costo-row-${costoCounter}')">X</button></td>`;
+            otrosCostosTbody.appendChild(newRow);
+            formatInputAsCurrency(newRow.querySelector('[name="montoTotalCosto"]'));
+            updateAllFastUI();
+        }
+        
+        function addCostoVariableRow(data = {}) {
+            costoVariableCounter++;
+            const newRow = document.createElement('tr');
+            newRow.id = `costo-var-row-${costoVariableCounter}`;
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control form-control-sm" name="itemCostoVariable" value="${data.item || ''}"></td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" data-format="number" data-decimals="2" name="porcentajeCostoVariable" value="${data.porcentaje || '0,00'}">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </td>
+                <td><input type="number" class="form-control form-control-sm text-center" name="mesInicioCostoVariable" value="${data.inicio || 1}" min="1"></td>
+                <td><input type="number" class="form-control form-control-sm text-center" name="mesFinCostoVariable" value="${data.fin || 1}" min="1"></td>
+                <td class="total-costo-variable-row text-end">0</td>
+                <td><button type="button" class="btn btn-sm btn-outline-secondary" onclick="removeRow('costo-var-row-${costoVariableCounter}')">X</button></td>`;
+            costosVariablesTbody.appendChild(newRow);
+            formatInputAsCurrency(newRow.querySelector('[name="porcentajeCostoVariable"]'));
+            updateAllFastUI();
+        }
+
+        function addCostoUnidadRow(data = {}) {
+            costoUnidadCounter++;
+            const newRow = document.createElement('tr');
+            newRow.id = `costo-unidad-row-${costoUnidadCounter}`;
+            newRow.innerHTML = `<td><input type="text" class="form-control form-control-sm" name="itemCostoUnidad" value="${data.item || ''}"></td><td><input type="text" class="form-control form-control-sm" data-format="number" data-decimals="1" name="costoPorUnidad" value="${data.costo || '0,0'}"></td><td><input type="number" class="form-control form-control-sm text-center" name="mesInicioCostoUnidad" value="${data.inicio || 1}" min="1"></td><td><input type="number" class="form-control form-control-sm text-center" name="mesFinCostoUnidad" value="${data.fin || 1}" min="1"></td><td class="total-costo-unidad-row text-end">0</td><td><button type="button" class="btn btn-sm btn-outline-secondary" onclick="removeRow('costo-unidad-row-${costoUnidadCounter}')">X</button></td>`;
+            costosUnidadTbody.appendChild(newRow);
+            formatInputAsCurrency(newRow.querySelector('[name="costoPorUnidad"]'));
+            updateAllFastUI();
+        }
+
+        function addIngresoEtapaRow(data = {}) {
+            ingresoEtapaCounter++;
+            const newRow = document.createElement('tr');
+            newRow.id = `ingreso-etapa-row-${ingresoEtapaCounter}`;
+            newRow.innerHTML = `<td><div class="input-group input-group-sm"><input type="text" class="form-control text-center" data-format="number" data-decimals="2" name="porcentajeIngreso" value="${data.porcentaje || '0,00'}"><span class="input-group-text">%</span></div></td><td><input type="text" class="form-control form-control-sm" name="descripcionIngreso" value="${data.descripcion || ''}"></td><td><input type="number" class="form-control form-control-sm text-center" name="mesInicioIngreso" value="${data.inicio || 1}" min="1"></td><td><input type="number" class="form-control form-control-sm text-center" name="mesFinIngreso" value="${data.fin || 1}" min="1"></td><td><button type="button" class="btn btn-sm btn-outline-secondary" onclick="removeRow('ingreso-etapa-row-${ingresoEtapaCounter}')">X</button></td>`;
+            ingresosEtapasTbody.appendChild(newRow);
+            formatInputAsCurrency(newRow.querySelector('[name="porcentajeIngreso"]'));
+            updateIngresosEtapasPercentage();
+        }
+        
+        function updateIngresosEtapasPercentage(changedInput = null) {
+            const rows = ingresosEtapasTbody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                document.getElementById('header-total-ingresos-pct').textContent = '0,00%';
+                return;
+            }
+
+            let totalPct = 0;
+            rows.forEach(row => {
+                totalPct += parseFormattedNumber(row.querySelector('[name="porcentajeIngreso"]').value) || 0;
+            });
+
+            if (totalPct > 100 && changedInput) {
+                const prevValue = parseFormattedNumber(changedInput.dataset.previousValue) || 0;
+                changedInput.value = formatCurrency(prevValue, 2);
+                totalPct = 0;
+                rows.forEach(row => {
+                    totalPct += parseFormattedNumber(row.querySelector('[name="porcentajeIngreso"]').value) || 0;
+                });
+            }
+            
+            const badge = document.getElementById('header-total-ingresos-pct');
+            badge.textContent = `${formatCurrency(totalPct, 2)}%`;
+            badge.classList.toggle('bg-success', Math.round(totalPct) === 100);
+            badge.classList.toggle('bg-danger', Math.round(totalPct) !== 100);
+        }
+
+        window.removeRow = function(rowId) {
+            const row = document.getElementById(rowId);
+            const isIngresoRow = row.id.startsWith('ingreso-etapa-row-');
+            row.remove();
+            if (isIngresoRow) {
+                updateIngresosEtapasPercentage();
+            }
+            updateAllFastUI();
+            debouncedUpdateAllOutputs(); 
+        }
+        
+        function getUnidadesResidencialesCount() {
+            return Array.from(unidadesTbody.querySelectorAll('tr')).reduce((count, row) => {
+                const tipo = row.querySelector('[name=tipoUnidad]').value;
+                if(tipo === 'casa' || tipo === 'departamento') {
+                    count += parseInt(row.querySelector('[name="cantidadUnidades"]').value) || 0;
+                }
+                return count;
+            }, 0);
+        }
+
+        function updateVentaTotals() {
+            let casaCount = 0; let deptoCount = 0;
+            const grandTotalVentas = Array.from(unidadesTbody.querySelectorAll('tr')).reduce((total, row) => {
+                const cantidad = parseFloat(row.querySelector('[name="cantidadUnidades"]').value) || 0;
+                const precio = parseFormattedNumber(row.querySelector('[name="precioVenta"]').value);
+                const tipo = row.querySelector('[name=tipoUnidad]').value;
+                if(tipo === 'casa') casaCount += cantidad;
+                if(tipo === 'departamento') deptoCount += cantidad;
+                row.querySelector('.total-venta-row').textContent = formatCurrency(cantidad * precio);
+                return total + (cantidad * precio);
+            }, 0);
+            document.getElementById('total-casas').textContent = formatCurrency(casaCount);
+            document.getElementById('total-deptos').textContent = formatCurrency(deptoCount);
+            updateHeaderBadge('header-total-ventas', grandTotalVentas);
+            updateOtrosCostosTotals(grandTotalVentas);
+            updateCostosUnidadTotals();
+            updateComisionVentasTotals();
+        }
+        function updateCostosFijosTotal() {
+            const grandTotal = Array.from(otrosCostosTbody.querySelectorAll('tr')).reduce((total, row) => total + parseFormattedNumber(row.querySelector('[name="montoTotalCosto"]').value), 0);
+            updateHeaderBadge('header-total-costos-fijos', grandTotal);
+        }
+        function updateOtrosCostosTotals(totalVentas) {
+            const grandTotalCostosVariables = Array.from(costosVariablesTbody.querySelectorAll('tr')).reduce((total, row) => {
+                const porcentaje = parseFormattedNumber(row.querySelector('[name="porcentajeCostoVariable"]').value) / 100 || 0;
+                const totalCostoFila = totalVentas * porcentaje;
+                row.querySelector('.total-costo-variable-row').textContent = formatCurrency(totalCostoFila);
+                return total + totalCostoFila;
+            }, 0);
+            updateHeaderBadge('header-total-costos-variables', grandTotalCostosVariables);
+        }
+        function updateCostosUnidadTotals() {
+            const totalUnidadesResidenciales = getUnidadesResidencialesCount();
+            const grandTotalCostosUnidad = Array.from(costosUnidadTbody.querySelectorAll('tr')).reduce((total, row) => {
+                const costoPorUnidad = parseFormattedNumber(row.querySelector('[name="costoPorUnidad"]').value);
+                const totalCostoFila = totalUnidadesResidenciales * costoPorUnidad;
+                row.querySelector('.total-costo-unidad-row').textContent = formatCurrency(totalCostoFila);
+                return total + totalCostoFila;
+            }, 0);
+            updateHeaderBadge('header-total-costos-unidad', grandTotalCostosUnidad);
+        }
+        function updateComisionVentasTotals() {
+            const pCierre = parseFormattedNumber(document.getElementById('comisionCierre').value) || 0;
+            const pEscritura = parseFormattedNumber(document.getElementById('comisionEscritura').value) || 0;
+            const pRecuperacion = parseFormattedNumber(document.getElementById('comisionRecuperacion').value) || 0;
+            const totalPorcentaje = pCierre + pEscritura + pRecuperacion;
+            document.getElementById('totalPorcentajeComision').textContent = `${formatCurrency(totalPorcentaje, 2)}%`;
+            const totalVentas = Array.from(unidadesTbody.querySelectorAll('tr')).reduce((total, row) => total + ( (parseFormattedNumber(row.querySelector('[name="cantidadUnidades"]').value) || 0) * parseFormattedNumber(row.querySelector('[name="precioVenta"]').value) ), 0);
+            const totalMonto = totalVentas * (totalPorcentaje / 100);
+            updateHeaderBadge('header-total-comision', totalMonto);
+        }
+        
+        function updateTerrenoHeaderTotal() {
+            const precio = parseFormattedNumber(document.getElementById('precioTerreno').value);
+            updateHeaderBadge('header-total-terreno', precio);
+        }
+        function updateValorFromPrecio() {
+            const superficie = parseFormattedNumber(document.getElementById('superficieTerreno').value);
+            const precio = parseFormattedNumber(document.getElementById('precioTerreno').value);
+            document.getElementById('valorTerrenoM2').value = superficie > 0 ? formatCurrency(precio / superficie, 2) : '0,00';
+            updateTerrenoHeaderTotal();
+        }
+        function updatePrecioFromValor() {
+            const superficie = parseFormattedNumber(document.getElementById('superficieTerreno').value);
+            const valor = parseFormattedNumber(document.getElementById('valorTerrenoM2').value);
+            document.getElementById('precioTerreno').value = formatCurrency(superficie * valor, 0);
+            updateTerrenoHeaderTotal();
+        }
+        function updateCostoConstruccion() {
+            const supSobre = parseFormattedNumber(document.getElementById('superficieLosaSobre').value);
+            const supBajo = parseFormattedNumber(document.getElementById('superficieLosaBajo').value);
+            const supUrb = parseFormattedNumber(document.getElementById('superficieUrbanizacion').value);
+            const costoM2Sobre = parseFormattedNumber(document.getElementById('costoM2Sobre').value);
+            const costoM2Bajo = parseFormattedNumber(document.getElementById('costoM2Bajo').value);
+            const costoM2Urb = parseFormattedNumber(document.getElementById('costoM2Urbanizacion').value);
+            const total = (supSobre * costoM2Sobre) + (supBajo * costoM2Bajo) + (supUrb * costoM2Urb);
+            document.getElementById('construction-card-body').dataset.costoTotal = total;
+            updateHeaderBadge('header-total-construccion', total);
+        }
+        
+        function updateParamTabKPIsAndCards(params, calculosInternos) {
+            const {
+                aporteSocios,
+                totalIvaPagar,
+                totalRentaPagar,
+                udi,
+                udiVta,
+                roiDi
+            } = calculosInternos;
+
+            document.getElementById('calculated-renta').textContent = formatCurrency(totalRentaPagar, 0);
+            document.getElementById('calculated-iva').textContent = formatCurrency(totalIvaPagar, 0);
+
+            const currency = params.currency;
+            const updateKPIElement = (elId, value, formatter, sign) => {
+                const kpiEl = document.getElementById(elId);
+                if (!kpiEl) return;
+                const valueEl = kpiEl.querySelector('.header-kpi-value');
+                valueEl.textContent = formatter(value);
+                kpiEl.classList.remove('positive', 'negative');
+                if (sign >= 0) {
+                    kpiEl.classList.add('positive');
+                } else {
+                    kpiEl.classList.add('negative');
+                }
+            };
+            
+            updateKPIElement('header-kpi-aporte', aporteSocios, (v) => `${currency} ${formatCurrency(v, 0)}`, 1);
+            updateKPIElement('header-kpi-udi', udi, (v) => `${currency} ${formatCurrency(v, 0)}`, udi);
+            updateKPIElement('header-kpi-udivta', udiVta, (v) => formatPercent(v, 1), udiVta);
+            updateKPIElement('header-kpi-roidi', roiDi, (v) => formatPercent(v, 1), roiDi);
+        }
+
+        function updateAllFastUI() {
+            updateAllCurrencyUnits();
+            updateVentaTotals();
+            updateCostosFijosTotal();
+            updateCostoConstruccion();
+            updateTerrenoHeaderTotal();
+        }
+        
+        function updateAllCurrencyUnits() {
+            const currency = currencySelect.value;
+            document.querySelectorAll('[data-unit="currency"]').forEach(span => { span.textContent = currency; });
+        }
+        
+        function getParams() {
+            const params = {
+                projectName: document.getElementById('projectName').value,
+                currency: currencySelect.value,
+                discountRate: parseFormattedNumber(document.getElementById('discountRate').value) / 100 || 0,
+                taxRate: parseFormattedNumber(document.getElementById('taxRate').value) / 100 || 0,
+                iva: parseFormattedNumber(document.getElementById('iva').value) / 100 || 0,
+                mesCompraTerreno: parseInt(document.getElementById('mesCompraTerreno').value),
+                mesInicioConstruccion: parseInt(document.getElementById('mesInicioConstruccion').value),
+                mesTerminoConstruccion: parseInt(document.getElementById('mesTerminoConstruccion').value),
+                terreno: {
+                    superficie: parseFormattedNumber(document.getElementById('superficieTerreno').value),
+                    precio: parseFormattedNumber(document.getElementById('precioTerreno').value)
+                },
+                construccion: { 
+                    superficieLosaSobre: parseFormattedNumber(document.getElementById('superficieLosaSobre').value),
+                    superficieLosaBajo: parseFormattedNumber(document.getElementById('superficieLosaBajo').value),
+                    superficieUrbanizacion: parseFormattedNumber(document.getElementById('superficieUrbanizacion').value),
+                    costoM2Sobre: parseFormattedNumber(document.getElementById('costoM2Sobre').value),
+                    costoM2Bajo: parseFormattedNumber(document.getElementById('costoM2Bajo').value),
+                    costoM2Urbanizacion: parseFormattedNumber(document.getElementById('costoM2Urbanizacion').value),
+                    costoTotal: parseFloat(document.getElementById('construction-card-body').dataset.costoTotal) || 0, 
+                    anticipo: parseFormattedNumber(document.getElementById('porcAnticipo').value) / 100 || 0, 
+                    retencion: parseFormattedNumber(document.getElementById('porcRetencion').value) / 100 || 0, 
+                    curvaSParam: parseFloat(document.getElementById('curvaSParam').value) || 10 
+                },
+                financiamiento: {
+                    monto: parseFormattedNumber(document.getElementById('montoFinanciamiento').value),
+                    tasa: parseFormattedNumber(document.getElementById('tasaInteresAnual').value) / 100 || 0,
+                    cuotaAlzamiento: (parseFormattedNumber(document.getElementById('cuotaAlzamiento').value) || 0) / 100
+                },
+                comisionVentas: {
+                    cierre: parseFormattedNumber(document.getElementById('comisionCierre').value)/100 || 0,
+                    escritura: parseFormattedNumber(document.getElementById('comisionEscritura').value)/100 || 0,
+                    recuperacion: parseFormattedNumber(document.getElementById('comisionRecuperacion').value)/100 || 0
+                },
+                unidades: [], otrosCostos: [], costosVariables: [], costosUnidad: [], ingresosEtapas: [],
+                fechaInicio: document.getElementById('fechaInicio').value,
+            };
+
+            unidadesTbody.querySelectorAll('tr').forEach(r => params.unidades.push({ tipo: r.querySelector('[name=tipoUnidad]').value, nombre: r.querySelector('[name=nombreModelo]').value, cantidad: parseInt(r.querySelector('[name=cantidadUnidades]').value), superficie: parseFormattedNumber(r.querySelector('[name=superficieUnidad]').value), precio: parseFormattedNumber(r.querySelector('[name=precioVenta]').value), velocidad: parseFormattedNumber(r.querySelector('[name=velocidadVenta]').value) }));
+            otrosCostosTbody.querySelectorAll('tr').forEach(r => params.otrosCostos.push({ item: r.querySelector('[name=itemCosto]').value, monto: parseFormattedNumber(r.querySelector('[name=montoTotalCosto]').value), inicio: parseInt(r.querySelector('[name=mesInicioCosto]').value), fin: parseInt(r.querySelector('[name=mesFinCosto]').value) }));
+            costosVariablesTbody.querySelectorAll('tr').forEach(r => params.costosVariables.push({ item: r.querySelector('[name=itemCostoVariable]').value, porcentaje: parseFormattedNumber(r.querySelector('[name=porcentajeCostoVariable]').value) / 100 || 0, inicio: parseInt(r.querySelector('[name=mesInicioCostoVariable]').value), fin: parseInt(r.querySelector('[name=mesFinCostoVariable]').value) }));
+            costosUnidadTbody.querySelectorAll('tr').forEach(r => params.costosUnidad.push({ item: r.querySelector('[name=itemCostoUnidad]').value, costo: parseFormattedNumber(r.querySelector('[name=costoPorUnidad]').value), inicio: parseInt(r.querySelector('[name=mesInicioCostoUnidad]').value), fin: parseInt(r.querySelector('[name=mesFinCostoUnidad]').value) }));
+            ingresosEtapasTbody.querySelectorAll('tr').forEach(r => params.ingresosEtapas.push({ porcentaje: parseFormattedNumber(r.querySelector('[name=porcentajeIngreso]').value) / 100 || 0, descripcion: r.querySelector('[name=descripcionIngreso]').value, inicio: parseInt(r.querySelector('[name=mesInicioIngreso]').value), fin: parseInt(r.querySelector('[name=mesFinIngreso]').value) }));
+            return params;
+        }
+
+        function runFullCalculation(overrideParams = {}) {
+            const params = { ...getParams(), ...overrideParams };
+            if (params.ingresosEtapas.length === 0) return null;
+
+            let maxMes = params.mesTerminoConstruccion;
+            [...params.otrosCostos, ...params.costosVariables, ...params.costosUnidad, ...params.ingresosEtapas].forEach(item => maxMes = Math.max(maxMes, item.fin || 0));
+            const duracionProyecto = maxMes > 0 ? maxMes + 24 : 1; // Extend to allow for tax payment in the next year
+            const meses = Array.from({ length: duracionProyecto }, (_, i) => i + 1);
+            
+            const flujo = { meses, ingresos: {}, egresos: {}, totales: {}, auxiliares: {} };
+            
+            const totalVentasBruto = params.unidades.reduce((s, u) => s + (u.cantidad * u.precio), 0);
+            flujo.ingresos['Ingresos del Proyecto'] = Array(duracionProyecto).fill(0);
+
+            params.ingresosEtapas.forEach(etapa => {
+                if (etapa.porcentaje > 0 && etapa.fin >= etapa.inicio) {
+                    const montoEtapa = totalVentasBruto * etapa.porcentaje;
+                    const duracionEtapa = etapa.fin - etapa.inicio + 1;
+                    let montoRepartido = 0;
+                    for (let mes = etapa.inicio; mes <= etapa.fin; mes++) {
+                        if (mes - 1 < duracionProyecto) {
+                            let montoMes = (mes < etapa.fin) ? Math.round((montoEtapa / duracionEtapa) * 100) / 100 : montoEtapa - montoRepartido;
+                            montoRepartido += montoMes;
+                            flujo.ingresos['Ingresos del Proyecto'][mes - 1] += montoMes;
+                        }
+                    }
+                }
+            });
+            
+            if(params.terreno.precio > 0) { flujo.egresos['Terreno'] = Array(duracionProyecto).fill(0); if (params.mesCompraTerreno -1 < duracionProyecto) { flujo.egresos['Terreno'][params.mesCompraTerreno -1] = params.terreno.precio; }}
+            
+            const c = params.construccion; 
+            const duracionConst = params.mesTerminoConstruccion - params.mesInicioConstruccion + 1; 
+            if (duracionConst > 0 && c.costoTotal > 0) { 
+                // Cambia el nombre de la partida de egreso
+                flujo.egresos['Construcción (Anticipo)'] = Array(duracionProyecto).fill(0); 
+                flujo.egresos['Construcción (Estados de pago)'] = Array(duracionProyecto).fill(0); 
+                flujo.egresos['Construcción (Dev. Retención)'] = Array(duracionProyecto).fill(0); 
+                
+                const costoBaseConstruccion = c.costoTotal; 
+                const cAnticipo = costoBaseConstruccion * c.anticipo;
+                const cRetencion = costoBaseConstruccion * c.retencion;
+                const cBase = costoBaseConstruccion - cAnticipo - cRetencion; 
+                const paramK = c.curvaSParam; 
+
+                // 1. El Anticipo se paga un mes antes del inicio (o en el mes 1 si el inicio es 1)
+                if (cAnticipo > 0 && params.mesInicioConstruccion > 0) {
+                    const mesPagoAnticipo = params.mesInicioConstruccion > 1 ? params.mesInicioConstruccion - 1 : 1;
+                    if (mesPagoAnticipo - 1 < duracionProyecto) {
+                        flujo.egresos['Construcción (Anticipo)'][mesPagoAnticipo - 1] = cAnticipo;
+                    }
+                }
+
+                // 3. Los estados de pago se pagan desde el mes de inicio hasta el mes de término
+                let totalPagadoS = 0;
+                if (paramK <= 1) { // Curva Lineal
+                    const pagoUniforme = cBase / duracionConst;
+                    for (let i = 0; i < duracionConst; i++) {
+                        let pagoMes = (i < duracionConst - 1) ? pagoUniforme : (cBase - totalPagadoS);
+                        totalPagadoS += pagoMes;
+                        const mesPagoIndex = params.mesInicioConstruccion - 1 + i; // Corregido para iniciar en el mes correcto
+                        if (mesPagoIndex < duracionProyecto) {
+                            flujo.egresos['Construcción (Estados de pago)'][mesPagoIndex] = pagoMes;
+                        }
+                    }
+                } 
+                else { // Curva S
+                    const sigmoid = (t, k) => 1 / (1 + Math.exp(-k * (t - 0.5)));
+                    for (let i = 0; i < duracionConst; i++) {
+                        let pagoMes;
+                        if (i < duracionConst - 1) {
+                            const t_end = (i + 1) / duracionConst;
+                            const cumulative_end = sigmoid(t_end, paramK);
+                            const t_start = i / duracionConst;
+                            const cumulative_start = sigmoid(t_start, paramK);
+                            pagoMes = cBase * (cumulative_end - cumulative_start);
+                            totalPagadoS += pagoMes;
+                        } else {
+                            pagoMes = cBase - totalPagadoS;
+                        }
+                        const mesPagoIndex = params.mesInicioConstruccion - 1 + i; // Corregido para iniciar en el mes correcto
+                        if (mesPagoIndex < duracionProyecto) {
+                            flujo.egresos['Construcción (Estados de pago)'][mesPagoIndex] = pagoMes;
+                        }
+                    }
+                }
+
+                // 2. La retención se paga un mes después del término
+                if (cRetencion > 0) {
+                    const mesPagoRetencion = params.mesTerminoConstruccion + 1;
+                    if (mesPagoRetencion - 1 < duracionProyecto) {
+                        flujo.egresos['Construcción (Dev. Retención)'][mesPagoRetencion - 1] = cRetencion;
+                    }
+                }
+            }
+
+            const distributeUniformly = (totalAmount, startDate, endDate, flowArray) => { const duration = endDate - startDate + 1; if (totalAmount > 0 && duration > 0) { let totalPaid = 0; for (let mes = startDate; mes <= endDate; mes++) { if (mes - 1 < duracionProyecto) { let paymentThisMonth = (mes < endDate) ? Math.round((totalAmount / duration) * 100) / 100 : totalAmount - totalPaid; totalPaid += paymentThisMonth; flowArray[mes - 1] += paymentThisMonth; } } } };
+            params.otrosCostos.forEach(costo => { flujo.egresos[costo.item] = Array(duracionProyecto).fill(0); distributeUniformly(costo.monto, costo.inicio, costo.fin, flujo.egresos[costo.item]); });
+            const totalUnidadesResidenciales = params.unidades.reduce((count, u) => (u.tipo === 'casa' || u.tipo === 'departamento') ? count + u.cantidad : count, 0);
+            params.costosUnidad.forEach(costo => { const totalCostoItem = costo.costo * totalUnidadesResidenciales; flujo.egresos[costo.item] = Array(duracionProyecto).fill(0); distributeUniformly(totalCostoItem, costo.inicio, costo.fin, flujo.egresos[costo.item]); });
+            params.costosVariables.forEach(costo => { const totalCostoItem = totalVentasBruto * costo.porcentaje; flujo.egresos[costo.item] = Array(duracionProyecto).fill(0); distributeUniformly(totalCostoItem, costo.inicio, costo.fin, flujo.egresos[costo.item]); });
+            const comisionTotalPorc = params.comisionVentas.cierre + params.comisionVentas.escritura + params.comisionVentas.recuperacion; if (comisionTotalPorc > 0) { flujo.egresos['Comisión de Ventas'] = meses.map((_, i) => flujo.ingresos['Ingresos del Proyecto'][i] * comisionTotalPorc); }
+            
+            // 4. El financiamiento se gira en proporción a los pagos de construcción (Anticipo + Estados de Pago)
+            const f = params.financiamiento; 
+            if (f.monto > 0) { 
+                flujo.ingresos['Crédito (Giros)'] = Array(duracionProyecto).fill(0); 
+                flujo.egresos['Intereses Crédito'] = Array(duracionProyecto).fill(0); 
+                flujo.egresos['Pago Principal Crédito'] = Array(duracionProyecto).fill(0); 
+                let deudaAcumulada = 0; 
+                let girosAcumulados = 0; 
+                const tasaMensual = f.tasa / 12; 
+                
+                const pagosConstAnticipo = flujo.egresos['Construcción (Anticipo)'] || []; 
+                const pagosConstProgreso = flujo.egresos['Construcción (Estados de pago)'] || []; 
+                const totalPagosConstruccionReales = pagosConstAnticipo.reduce((a, b) => a + b, 0) + pagosConstProgreso.reduce((a, b) => a + b, 0); 
+                
+                for (let i = 0; i < duracionProyecto; i++) { 
+                    if (deudaAcumulada > 0) { 
+                        flujo.egresos['Intereses Crédito'][i] = deudaAcumulada * tasaMensual; 
+                    } 
+                    
+                    const pagoConstruccionMes = (pagosConstAnticipo[i] || 0) + (pagosConstProgreso[i] || 0); 
+                    
+                    if (pagoConstruccionMes > 0 && totalPagosConstruccionReales > 0) { 
+                        let giroMes = f.monto * (pagoConstruccionMes / totalPagosConstruccionReales); 
+                        if (girosAcumulados + giroMes > f.monto) {
+                            giroMes = f.monto - girosAcumulados;
+                        }
+                        // Asegurar que el último giro complete el monto si queda un remanente
+                        if ((i + 1 === params.mesTerminoConstruccion) && (girosAcumulados < f.monto)) {
+                             giroMes = f.monto - girosAcumulados;
+                        }
+                        if (giroMes > 0) { 
+                            flujo.ingresos['Crédito (Giros)'][i] = giroMes; 
+                            deudaAcumulada += giroMes; 
+                            girosAcumulados += giroMes; 
+                        } 
+                    } 
+                    
+                    const ingresosMes = flujo.ingresos['Ingresos del Proyecto'][i] || 0; 
+                    if (ingresosMes > 0 && deudaAcumulada > 0) { 
+                        const pagoReal = Math.min(ingresosMes * f.cuotaAlzamiento, deudaAcumulada); 
+                        if (pagoReal > 0) { 
+                            flujo.egresos['Pago Principal Crédito'][i] = pagoReal; 
+                            deudaAcumulada -= pagoReal; 
+                        } 
+                    } 
+                } 
+            }
+            
+            const costoTerreno = params.terreno.precio;
+            const costoConstruccionBruto = params.construccion.costoTotal;
+            const costoPorcentajeVentasBruto = params.costosVariables.reduce((total, costo) => total + (totalVentasBruto * costo.porcentaje), 0);
+            const costoPorUnidadBruto = params.costosUnidad.reduce((total, costo) => total + (totalUnidadesResidenciales * costo.costo), 0);
+            const costosFijosBruto = params.otrosCostos.reduce((total, costo) => total + costo.monto, 0);
+            const costoComisionBruto = totalVentasBruto * comisionTotalPorc;
+            const costoFinancieroReal = (flujo.egresos['Intereses Crédito'] || []).reduce((a, b) => a + b, 0);
+            const totalCostosBrutos = costoTerreno + costoConstruccionBruto + costoPorcentajeVentasBruto + costoPorUnidadBruto + costosFijosBruto + costoComisionBruto;
+
+            const tasaIVA = params.iva;
+            const baseIVAVenta = totalVentasBruto - costoTerreno;
+            const ivaVenta = baseIVAVenta > 0 ? baseIVAVenta * tasaIVA / (1 + tasaIVA) : 0;
+            const costosBrutosAfectosIVA = costoConstruccionBruto + costoPorcentajeVentasBruto + costoPorUnidadBruto + costosFijosBruto + costoComisionBruto;
+            const ivaCostos = costosBrutosAfectosIVA * tasaIVA / (1 + tasaIVA);
+            const totalIvaPagar = ivaVenta - ivaCostos;
+
+            const tasaRenta = params.taxRate;
+            const baseImponible = totalVentasBruto - totalCostosBrutos - costoFinancieroReal - totalIvaPagar;
+            const totalRentaPagar = baseImponible > 0 ? baseImponible * tasaRenta : 0;
+            const udi = baseImponible > 0 ? baseImponible * (1 - tasaRenta) : baseImponible;
+
+            const totalIngresosProyecto = (flujo.ingresos['Ingresos del Proyecto'] || []).reduce((a, b) => a + b, 0);
+
+            flujo.egresos['IVA a Pagar'] = Array(duracionProyecto).fill(0);
+            if (totalIvaPagar > 0 && totalIngresosProyecto > 0) {
+                for(let i=0; i<duracionProyecto; i++) {
+                    const proporcionIngreso = flujo.ingresos['Ingresos del Proyecto'][i] / totalIngresosProyecto;
+                    flujo.egresos['IVA a Pagar'][i] = totalIvaPagar * proporcionIngreso;
+                }
+            }
+
+            flujo.egresos['Renta'] = Array(duracionProyecto).fill(0);
+            if (totalRentaPagar > 0 && totalIngresosProyecto > 0) {
+                for(let i=0; i<duracionProyecto; i++) {
+                    const proporcionIngreso = flujo.ingresos['Ingresos del Proyecto'][i] / totalIngresosProyecto;
+                    flujo.egresos['Renta'][i] = totalRentaPagar * proporcionIngreso;
+                }
+            }
+
+            flujo.totales['Total Ingresos'] = meses.map((_, i) => Object.values(flujo.ingresos).reduce((s, arr) => s + (arr ? arr[i] : 0), 0));
+            flujo.totales['Total Egresos'] = meses.map((_, i) => Object.values(flujo.egresos).reduce((s, arr) => s + (arr ? arr[i] : 0), 0));
+            
+            flujo.auxiliares['Flujo Financiado Después de Impuestos'] = meses.map((_, i) => flujo.totales['Total Ingresos'][i] - flujo.totales['Total Egresos'][i]);
+            flujo.auxiliares['Flujo Financiado Antes de Impuestos'] = meses.map((_, i) => flujo.auxiliares['Flujo Financiado Después de Impuestos'][i] + (flujo.egresos['Renta']?.[i] || 0) + (flujo.egresos['IVA a Pagar']?.[i] || 0));
+            flujo.auxiliares['Flujo Puro Después de Impuestos'] = meses.map((_, i) => flujo.auxiliares['Flujo Financiado Después de Impuestos'][i] + (flujo.egresos['Intereses Crédito']?.[i] || 0) + (flujo.egresos['Pago Principal Crédito']?.[i] || 0) - (flujo.ingresos['Crédito (Giros)']?.[i] || 0));
+            flujo.auxiliares['Flujo Puro Antes de Impuestos'] = meses.map((_, i) => flujo.auxiliares['Flujo Puro Después de Impuestos'][i] + (flujo.egresos['Renta']?.[i] || 0) + (flujo.egresos['IVA a Pagar']?.[i] || 0));
+            
+            flujo.auxiliares['Deuda Bancaria'] = Array(duracionProyecto).fill(0); let deuda = 0; for (let i=0; i<duracionProyecto; i++) { deuda += (flujo.ingresos['Crédito (Giros)']?.[i] || 0) - (flujo.egresos['Pago Principal Crédito']?.[i] || 0); flujo.auxiliares['Deuda Bancaria'][i] = deuda; }
+            
+            const flujoInversionista = Array(duracionProyecto).fill(0);
+            let saldoAcumulado = 0;
+            for (let i = 0; i < duracionProyecto; i++) {
+                saldoAcumulado += flujo.auxiliares['Flujo Financiado Después de Impuestos'][i];
+                if (saldoAcumulado < -0.01) {
+                    flujoInversionista[i] = saldoAcumulado;
+                    saldoAcumulado = 0;
+                } else if (saldoAcumulado > 0.01) {
+                    flujoInversionista[i] = saldoAcumulado;
+                    saldoAcumulado = 0;
+                }
+            }
+            flujo.auxiliares['Aportes/Devoluciones Socios'] = flujoInversionista;
+
+            const montoFinanciamiento = params.financiamiento.monto;
+            const aporteSocios = totalCostosBrutos + costoFinancieroReal - montoFinanciamiento;
+            const udiVta = totalVentasBruto > 0 ? udi / totalVentasBruto : 0;
+            const roiDi = aporteSocios > 0 ? udi / aporteSocios : 0;
+            const calculosInternos = { aporteSocios, totalIvaPagar, totalRentaPagar, udi, udiVta, roiDi };
+
+            return { flujo, params, calculosInternos };
+        }
+        
+        const calculateVAN = (annualRate, cashflows) => {
+            if (!cashflows || cashflows.length === 0 || typeof cashflows.reduce !== 'function') return 0;
+            const monthlyRate = Math.pow(1 + annualRate, 1 / 12) - 1;
+            return cashflows.reduce((van, flow, i) => van + flow / Math.pow(1 + monthlyRate, i + 1), 0);
+        };
+        
+        const calculateTIR = (cashflows) => {
+            if (!cashflows || !cashflows.some(v => v > 0) || !cashflows.some(v => v < 0)) {
+                return NaN;
+            }
+            const MAX_ITERATIONS = 50; const PRECISION = 1e-7; let rate = 0.1 / 12;
+            for (let i = 0; i < MAX_ITERATIONS; i++) {
+                let npv = 0; let derivative = 0;
+                for (let j = 0; j < cashflows.length; j++) {
+                    npv += cashflows[j] / Math.pow(1 + rate, j + 1);
+                    derivative += -(j + 1) * cashflows[j] / Math.pow(1 + rate, j + 2);
+                }
+                if (Math.abs(derivative) < PRECISION) return NaN;
+                const newRate = rate - npv / derivative;
+                if (Math.abs(newRate - rate) < PRECISION) {
+                    const annualTIR = Math.pow(1 + newRate, 12) - 1;
+                    if (isNaN(annualTIR)) return NaN;
+                    return Math.min(1, Math.max(0, annualTIR));
+                }
+                rate = newRate;
+            }
+            return NaN;
+        };
+
+
+        function renderFinalVanTirToHeader(kpis) { const currency = currencySelect.value; const updateKPIElement = (elId, value, formatter, sign) => { const kpiEl = document.getElementById(elId); if (!kpiEl) return; const valueEl = kpiEl.querySelector('.header-kpi-value'); valueEl.textContent = formatter(value); kpiEl.classList.remove('positive', 'negative'); if (sign >= 0) kpiEl.classList.add('positive'); else kpiEl.classList.add('negative'); }; updateKPIElement('header-kpi-van', kpis.despuesImp.van, (v) => `${currency} ${formatCurrency(v, 0)}`, kpis.despuesImp.van); updateKPIElement('header-kpi-tir', kpis.despuesImp.tir, (v) => formatPercent(v, 1), kpis.despuesImp.tir); }
+        const calculateKPIs_full = (flujo, params) => {
+            const kpis = { antesImp: {}, despuesImp: {} };
+            const totalIngresos = (flujo.totales['Total Ingresos'] || []).reduce((a, b) => a + b, 0);
+            const totalEgresos = (flujo.totales['Total Egresos'] || []).reduce((a, b) => a + b, 0);
+            
+            const flujoFinanciadoAI = flujo.auxiliares['Flujo Financiado Antes de Impuestos'];
+            kpis.antesImp.utilidadBruta = flujoFinanciadoAI.reduce((a, b) => a + b, 0);
+            kpis.antesImp.inversionTotal = totalEgresos;
+            kpis.antesImp.margen = totalIngresos > 0 ? kpis.antesImp.utilidadBruta / totalIngresos : 0;
+            kpis.antesImp.van = calculateVAN(params.discountRate, flujoFinanciadoAI);
+            kpis.antesImp.tir = calculateTIR(flujoFinanciadoAI);
+
+            const flujoFinanciadoDI = flujo.auxiliares['Flujo Financiado Después de Impuestos'];
+            const aportesSociosFlow = flujo.auxiliares['Aportes/Devoluciones Socios'];
+            const flujoDelInversionista = [];
+            for (let i = 0; i < flujoFinanciadoDI.length; i++) {
+                const inyeccion = aportesSociosFlow[i];
+                if (inyeccion > 0) {
+                    flujoDelInversionista.push(-inyeccion);
+                } else {
+                    flujoDelInversionista.push(flujoFinanciadoDI[i]);
+                }
+            }
+
+            kpis.despuesImp.utilidadNeta = flujoDelInversionista.reduce((a,b)=>a+b, 0);
+            kpis.despuesImp.aporteSocios = aportesSociosFlow.reduce((a,b)=>a+b,0);
+            kpis.despuesImp.inversionTotal = totalEgresos;
+            kpis.despuesImp.margen = totalIngresos > 0 ? kpis.despuesImp.utilidadNeta / totalIngresos : 0;
+            kpis.despuesImp.roidi = kpis.despuesImp.aporteSocios > 0 ? kpis.despuesImp.utilidadNeta / kpis.despuesImp.aporteSocios : 0;
+            
+            kpis.despuesImp.van = calculateVAN(params.discountRate, flujo.auxiliares['Flujo Financiado Después de Impuestos']);
+            kpis.despuesImp.tir = calculateTIR(flujo.auxiliares['Flujo Financiado Después de Impuestos']);
+
+            return kpis;
+        };
+        
+        const renderFlujoTabla_full = ({ flujo, params }) => { 
+            const container = document.getElementById('flujo-caja-container'); 
+            const startDate = new Date(params.fechaInicio + 'T00:00:00'); 
+            const dateHeaders = flujo.meses.map((_, i) => { 
+                const currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1); 
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0'); 
+                const year = String(currentDate.getFullYear()).slice(-2); 
+                return `${month}/${year}`; 
+            }); 
+            const ingresoKeys = Object.keys(flujo.ingresos); 
+            const egressKeysInOrder = [ 
+                'Terreno', 
+                'Construcción (Anticipo)', 
+                'Construcción (Estados de pago)', 
+                'Construcción (Dev. Retención)', 
+                ...params.costosVariables.map(c => c.item), 
+                ...params.costosUnidad.map(c => c.item), 
+                ...params.otrosCostos.map(c => c.item), 
+                'Comisión de Ventas', 
+                'IVA a Pagar', 
+                'Renta', 
+                'Intereses Crédito', 
+                'Pago Principal Crédito' 
+            ].filter(key => flujo.egresos[key]); 
+            
+            container.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><h4 class="mb-0">Flujo de Caja: ${params.projectName}</h4><button class="btn btn-sm btn-light copy-table-btn" data-table-target="#flujo-caja-container .cashflow-table" title="Copiar tabla para Excel"><i class="bi bi-clipboard"></i></button></div><div class="table-responsive" style="max-height: none;"><table class="table table-striped table-bordered table-hover table-sm cashflow-table"><thead class="table-dark sticky-top"><tr><th></th><th></th>${dateHeaders.map(d => `<th>${d}</th>`).join('')}</tr><tr><th>Partida / Mes</th><th>Total</th>${flujo.meses.map(m => `<th>${m}</th>`).join('')}</tr></thead><tbody><tr class="bg-light fw-bold text-start"><td colspan="${flujo.meses.length+2}">INGRESOS</td></tr>${ingresoKeys.map(k=>renderRow(k,flujo.ingresos[k],false,true)).join('')}${renderRow('Total Ingresos',flujo.totales['Total Ingresos'],true)}<tr class="bg-light fw-bold text-start"><td colspan="${flujo.meses.length+2}">EGRESOS</td></tr>${egressKeysInOrder.map(k=>renderRow(k,flujo.egresos[k],false,true)).join('')}${renderRow('Total Egresos',flujo.totales['Total Egresos'],true)}</tbody><tbody class="table-group-divider"><tr><td colspan="${flujo.meses.length+2}" style="border:none;height:1rem;background:transparent !important;"></td></tr>${Object.keys(flujo.auxiliares).map(k => renderRow(k, flujo.auxiliares[k], true, false, k !== 'Deuda Bancaria')).join('')}</tbody></table></div>`; 
+            
+            function renderRow(title, data, isBold = false, isSub = false, showTotal = true){ 
+                const total = showTotal ? data.reduce((a, b) => a + b, 0) : 0; 
+                const totalHtml = showTotal ? formatCurrency(total) : ''; 
+                const textAlignment = isSub ? 'padding-left: 2rem;' : ''; 
+                return `<tr style="${isBold?'font-weight: bold;':''}"><td style="text-align: left; ${textAlignment}">${title}</td><td class="text-end">${totalHtml}</td>${data.map(v => `<td class="text-end">${formatCurrency(v)}</td>`).join('')}</tr>`; 
+            } 
+        };
+        
+        function adjustSimHeight() {
+            const simControlsContainer = document.getElementById('eval-timeline-controls-container');
+            const chart1 = document.getElementById('flujoPuroChart')?.parentElement;
+            const chart2 = document.getElementById('flujoMensualChart')?.parentElement;
+            const simCardHeader = simControlsContainer?.closest('.card')?.querySelector('.card-header');
+
+            if (!simControlsContainer || !chart1 || !chart2 || !simCardHeader) return;
+
+            const rowGap = parseFloat(getComputedStyle(chart1.parentElement).rowGap) || 24;
+            const chartsHeight = chart1.offsetHeight + chart2.offsetHeight + rowGap;
+            
+            const simCardHeaderHeight = simCardHeader.offsetHeight;
+            const simCardBodyStyles = getComputedStyle(simControlsContainer.parentElement);
+            const simCardBodyPadding = parseFloat(simCardBodyStyles.paddingTop) + parseFloat(simCardBodyStyles.paddingBottom);
+
+            const targetHeight = chartsHeight - simCardHeaderHeight - simCardBodyPadding;
+            
+            simControlsContainer.style.height = `${targetHeight}px`;
+        }
+
+        function findLastActiveMonth(flujo) {
+            let lastIndex = 0;
+            const arraysToCheck = [
+                flujo.auxiliares['Flujo Puro Después de Impuestos'],
+                flujo.auxiliares['Flujo Financiado Después de Impuestos'],
+                flujo.auxiliares['Aportes/Devoluciones Socios']
+            ];
+            arraysToCheck.forEach(arr => {
+                if (arr) {
+                    for (let i = arr.length - 1; i >= 0; i--) {
+                        if (Math.abs(arr[i]) > 0.01) {
+                            lastIndex = Math.max(lastIndex, i);
+                            break;
+                        }
+                    }
+                }
+            });
+            return lastIndex;
+        }
+
+        function initializeEvalTab({ flujo, params }) {
+            const container = document.getElementById('evaluacion-container');
+            container.innerHTML = `
+                <div class="row g-4">
+                    <div class="col-lg-3">
+                        <div class="card h-100" id="simulation-card">
+                            <div class="card-header fw-bold">Simulación</div>
+                            <div class="card-body" id="eval-timeline-controls-container" style="overflow-y: auto; padding-right: 1rem;">
+                                <!-- Sliders will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="row g-4" id="charts-container">
+                            <div class="col-12"><div class="card"><div class="card-body"><canvas id="flujoPuroChart"></canvas></div></div></div>
+                            <div class="col-12"><div class="card"><div class="card-body"><canvas id="flujoMensualChart"></canvas></div></div></div>
+                            <div class="col-12"><div class="card"><div class="card-body"><canvas id="flujoAcumuladoChart"></canvas></div></div></div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            renderAndBindTimelineControls(params);
+            createCharts_full(flujo, params);
+            
+            if (simLayoutObserver) simLayoutObserver.disconnect();
+            const chartsContainer = document.getElementById('charts-container');
+            if(chartsContainer) {
+                simLayoutObserver = new ResizeObserver(debounce(adjustSimHeight, 100));
+                simLayoutObserver.observe(chartsContainer);
+            }
+        }
+
+        function updateEvalCharts({ flujo, params }) {
+            const lastActiveMonth = findLastActiveMonth(flujo);
+            const displayLimit = lastActiveMonth + 2;
+
+            const startDate = new Date(params.fechaInicio + 'T00:00:00');
+            const chartLabels = flujo.meses.map((m, i) => {
+                const currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const year = String(currentDate.getFullYear()).slice(-2);
+                return `${m} (${month}-${year})`;
+            }).slice(0, displayLimit);
+            
+            const positiveColor = 'rgba(25, 135, 84, 0.5)';
+            const negativeColor = 'rgba(220, 53, 69, 0.5)';
+
+            const updateChartData = (chartId, labels, newData, newColors) => {
+                const chart = charts[chartId];
+                if (chart) {
+                    chart.data.labels = labels;
+                    chart.data.datasets[0].data = newData.slice(0, displayLimit);
+                    if (newColors) {
+                        chart.data.datasets[0].backgroundColor = newColors.slice(0, displayLimit);
+                    }
+                    chart.update('none');
+                }
+            };
+
+            updateChartData('flujoPuroChart', chartLabels, flujo.auxiliares['Flujo Puro Después de Impuestos'], flujo.auxiliares['Flujo Puro Después de Impuestos'].map(v => v >= 0 ? positiveColor : negativeColor));
+            updateChartData('flujoMensualChart', chartLabels, flujo.auxiliares['Flujo Financiado Después de Impuestos'], flujo.auxiliares['Flujo Financiado Después de Impuestos'].map(v => v >= 0 ? positiveColor : negativeColor));
+            
+            let acumuladoPostImp = 0;
+            const flujoAcumuladoPostImp = flujo.auxiliares['Flujo Financiado Después de Impuestos'].map(f => acumuladoPostImp += f);
+            updateChartData('flujoAcumuladoChart', chartLabels, flujoAcumuladoPostImp);
+        }
+
+        const renderEvaluacion_full = (data) => {
+            const container = document.getElementById('evaluacion-container');
+            if (container.dataset.initialized !== 'true') {
+                initializeEvalTab(data);
+                container.dataset.initialized = 'true';
+            } else {
+                updateEvalCharts(data);
+            }
+        };
+
+        function renderAndBindTimelineControls(params) {
+            const controlsContainer = document.getElementById('eval-timeline-controls-container');
+            if (!controlsContainer) return;
+
+            timelineSliders = {};
+            controlsContainer.innerHTML = '';
+
+            let controlsHtml = '';
+            const maxMonths = 120;
+
+            const ensureId = (input, prefix, index) => {
+                if (!input.id) input.id = `${prefix}-${index}`;
+                return input.id;
+            };
+
+            const createSingleSlider = (label, inputId, min, max, step) => {
+                const input = document.getElementById(inputId);
+                if (!input) return '';
+                const controlId = `timeline-${inputId}`;
+                return `
+                    <div class="mb-4 timeline-control">
+                        <label class="form-label small">${label}</label>
+                        <div id="${controlId}" data-input-id="${inputId}"></div>
+                        <div class="timeline-control-inputs mt-2 justify-content-center">
+                            <input type="number" class="form-control form-control-sm single-slider-input" value="${input.value}">
+                        </div>
+                    </div>
+                `;
+            };
+
+            const createRangeSlider = (label, startInputId, endInputId) => {
+                const startInput = document.getElementById(startInputId);
+                const endInput = document.getElementById(endInputId);
+                if (!startInput || !endInput) return '';
+
+                const controlId = `timeline-${startInputId}`;
+                return `
+                    <div class="mb-4 timeline-control">
+                        <label class="form-label small">${label}</label>
+                        <div id="${controlId}" data-start-input-id="${startInputId}" data-end-input-id="${endInputId}"></div>
+                        <div class="timeline-control-inputs mt-2">
+                            <input type="number" class="form-control form-control-sm" data-handle="0" value="${startInput.value}">
+                            <input type="number" class="form-control form-control-sm" data-handle="1" value="${endInput.value}">
+                        </div>
+                    </div>
+                `;
+            };
+            
+            let keyParamsHtml = '';
+            keyParamsHtml += createSingleSlider('Mes Compra Terreno', 'mesCompraTerreno', 1, maxMonths, 1);
+            keyParamsHtml += createSingleSlider('Curva S', 'curvaSParam', 1, 20, 1);
+            
+            let ingresosHtml = '<div class="section-header">Ingresos</div>';
+            const ingresosRows = document.querySelectorAll('#ingresos-etapas-tbody tr');
+            ingresosRows.forEach((row, index) => {
+                const item = row.querySelector(`[name="descripcionIngreso"]`).value || `Etapa Ingreso ${index + 1}`;
+                const inicioInput = row.querySelector(`input[name="mesInicioIngreso"]`);
+                const finInput = row.querySelector(`input[name="mesFinIngreso"]`);
+                ingresosHtml += createRangeSlider(item, ensureId(inicioInput, 'ing-ini', index), ensureId(finInput, 'ing-fin', index));
+            });
+
+            let costosHtml = '<div class="section-header">Costos</div>';
+            costosHtml += createRangeSlider('Construcción', 'mesInicioConstruccion', 'mesTerminoConstruccion');
+            
+            const createCostSliders = (tbodyId, nameAttr, labelPrefix, idPrefix) => {
+                let html = '';
+                const rows = document.querySelectorAll(`#${tbodyId} tr`);
+                rows.forEach((row, index) => {
+                    const item = row.querySelector(`[name="${nameAttr}"]`).value || `${labelPrefix} ${index + 1}`;
+                    const inicioInput = row.querySelector(`input[name^="mesInicio"]`);
+                    const finInput = row.querySelector(`input[name^="mesFin"]`);
+                    html += createRangeSlider(item, ensureId(inicioInput, `${idPrefix}-ini`, index), ensureId(finInput, `${idPrefix}-fin`, index));
+                });
+                return html;
+            };
+            
+            costosHtml += createCostSliders('costos-variables-tbody', 'itemCostoVariable', 'Costo Variable', 'cvar');
+            costosHtml += createCostSliders('costos-unidad-tbody', 'itemCostoUnidad', 'Costo Unidad', 'cuni');
+            costosHtml += createCostSliders('otros-costos-tbody', 'itemCosto', 'Costo Fijo', 'cfijo');
+
+            controlsContainer.innerHTML = keyParamsHtml + ingresosHtml + costosHtml;
+
+            controlsContainer.querySelectorAll('.timeline-control > div[id^="timeline-"]').forEach(sliderEl => {
+                if (sliderEl.dataset.inputId) {
+                    const originalInput = document.getElementById(sliderEl.dataset.inputId);
+                    const displayInput = sliderEl.nextElementSibling.querySelector('input');
+                    const min = Number(originalInput.min) || 1;
+                    const max = Number(originalInput.max) || maxMonths;
+                    const step = Number(originalInput.step) || 1;
+
+                    const slider = noUiSlider.create(sliderEl, {
+                        start: [Number(originalInput.value)],
+                        step: step, range: { 'min': min, 'max': max },
+                        format: { to: value => Math.round(value), from: value => Number(value) }
+                    });
+
+                    slider.on('update', (values) => {
+                        displayInput.value = values[0];
+                        if (originalInput.value != values[0]) {
+                            originalInput.value = values[0];
+                        }
+                        if (originalInput.id === 'curvaSParam') {
+                            document.getElementById('curvaSValue').textContent = values[0];
+                            drawSCurve(values[0]);
+                        }
+                    });
+                    slider.on('change', debouncedUpdateAllOutputs);
+                    displayInput.addEventListener('change', (e) => {
+                        slider.set(e.target.value);
+                        debouncedUpdateAllOutputs();
+                    });
+                    timelineSliders[originalInput.id] = { slider: slider, handle: 0 };
+                }
+                else if (sliderEl.dataset.startInputId) {
+                    const startInput = sliderEl.nextElementSibling.querySelector('input[data-handle="0"]');
+                    const endInput = sliderEl.nextElementSibling.querySelector('input[data-handle="1"]');
+                    const originalStartInput = document.getElementById(sliderEl.dataset.startInputId);
+                    const originalEndInput = document.getElementById(sliderEl.dataset.endInputId);
+
+                    const slider = noUiSlider.create(sliderEl, {
+                        start: [Number(startInput.value), Number(endInput.value)],
+                        connect: true, step: 1, margin: 0, behaviour: 'drag',
+                        range: { 'min': 1, 'max': maxMonths },
+                        format: { to: value => Math.round(value), from: value => Number(value) }
+                    });
+
+                    slider.on('update', (values) => {
+                        startInput.value = values[0];
+                        endInput.value = values[1];
+                        if (originalStartInput && originalStartInput.value != values[0]) originalStartInput.value = values[0];
+                        if (originalEndInput && originalEndInput.value != values[1]) originalEndInput.value = values[1];
+                    });
+                    
+                    slider.on('change', debouncedUpdateAllOutputs);
+
+                    [startInput, endInput].forEach(input => {
+                        input.addEventListener('change', (e) => {
+                            const values = [startInput.value, endInput.value];
+                            slider.set(values);
+                            debouncedUpdateAllOutputs();
+                        });
+                    });
+                    if (originalStartInput) timelineSliders[originalStartInput.id] = { slider: slider, handle: 0 };
+                    if (originalEndInput) timelineSliders[originalEndInput.id] = { slider: slider, handle: 1 };
+                }
+            });
+        }
+
+        const createCharts_full = (flujo, params) => { 
+            const lastActiveMonth = findLastActiveMonth(flujo);
+            const displayLimit = lastActiveMonth + 2;
+
+            const startDate = new Date(params.fechaInicio + 'T00:00:00');
+            const chartLabels = flujo.meses.map((m, i) => {
+                const currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const year = String(currentDate.getFullYear()).slice(-2);
+                return `${m} (${month}-${year})`;
+            }).slice(0, displayLimit);
+
+            const positiveColor = 'rgba(25, 135, 84, 0.5)';
+            const negativeColor = 'rgba(220, 53, 69, 0.5)';
+            const lineColor = 'rgba(25, 135, 84, 1)';
+            const fillColor = 'rgba(25, 135, 84, 0.2)';
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Mes / Fecha' },
+                        ticks: { maxRotation: 90, minRotation: 90, autoSkip: true, maxTicksLimit: 60 }
+                    },
+                    y: {
+                        title: { display: true, text: `Flujo (${params.currency})` },
+                        ticks: { callback: value => formatCurrency(value, 0) }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) { label += formatCurrency(context.parsed.y, 0); }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            };
+
+            const createChart = (id, config) => { 
+                if (charts[id]) charts[id].destroy(); 
+                const canvas = document.getElementById(id);
+                if(canvas) charts[id] = new Chart(canvas, config); 
+            }; 
+
+            createChart('flujoPuroChart', { 
+                type: 'bar', 
+                data: { 
+                    labels: chartLabels, 
+                    datasets: [{ 
+                        label: 'Flujo Puro (Después Imp.)', 
+                        data: flujo.auxiliares['Flujo Puro Después de Impuestos'].slice(0, displayLimit), 
+                        backgroundColor: flujo.auxiliares['Flujo Puro Después de Impuestos'].slice(0, displayLimit).map(v => v >= 0 ? positiveColor : negativeColor) 
+                    }] 
+                }, 
+                options: { ...commonOptions, plugins: { ...commonOptions.plugins, title: { display: true, text: 'Flujo de Caja Mensual (Puro)' } } }
+            });
+
+            createChart('flujoMensualChart', { 
+                type: 'bar', 
+                data: { 
+                    labels: chartLabels, 
+                    datasets: [{ 
+                        label: 'Flujo Financiado (Después Imp.)', 
+                        data: flujo.auxiliares['Flujo Financiado Después de Impuestos'].slice(0, displayLimit), 
+                        backgroundColor: flujo.auxiliares['Flujo Financiado Después de Impuestos'].slice(0, displayLimit).map(v => v >= 0 ? positiveColor : negativeColor) 
+                    }] 
+                }, 
+                options: { ...commonOptions, plugins: { ...commonOptions.plugins, title: { display: true, text: 'Flujo de Caja Mensual (Financiado)' } } }
+            }); 
+            
+            let acumuladoPostImp = 0; 
+            const flujoAcumuladoPostImp = flujo.auxiliares['Flujo Financiado Después de Impuestos'].map(f => acumuladoPostImp += f); 
+            createChart('flujoAcumuladoChart', { 
+                type: 'line', 
+                data: { 
+                    labels: chartLabels, 
+                    datasets: [{ 
+                        label: 'Flujo Acumulado (desp. imp.)', 
+                        data: flujoAcumuladoPostImp.slice(0, displayLimit), 
+                        fill: true, 
+                        backgroundColor: fillColor, 
+                        borderColor: lineColor 
+                    }] 
+                }, 
+                options: { ...commonOptions, plugins: { ...commonOptions.plugins, title: { display: true, text: 'Flujo de Caja Acumulado (Financiado)' } } }
+            });
+            
+            setTimeout(adjustSimHeight, 100);
+        };
+        
+        const renderResumenTab_full = ({ flujo, params }) => {
+            const container = document.getElementById('resumen-container');
+            if (!flujo || !flujo.auxiliares || Object.keys(flujo.auxiliares).length === 0) {
+                container.innerHTML = '<p class="text-muted">Genere un flujo de caja en la pestaña de parámetros para ver el resumen.</p>';
+                return;
+            }
+
+            const tirFinanciadoDI = calculateTIR(flujo.auxiliares['Flujo Financiado Después de Impuestos'] || []);
+            const tirFinanciadoAI = calculateTIR(flujo.auxiliares['Flujo Financiado Antes de Impuestos'] || []);
+            const tirPuroDI = calculateTIR(flujo.auxiliares['Flujo Puro Después de Impuestos'] || []);
+            const tirPuroAI = calculateTIR(flujo.auxiliares['Flujo Puro Antes de Impuestos'] || []);
+            
+            const totalFinanciadoDI = (flujo.auxiliares['Flujo Financiado Después de Impuestos'] || []).reduce((a,b)=>a+b,0);
+            const totalFinanciadoAI = (flujo.auxiliares['Flujo Financiado Antes de Impuestos'] || []).reduce((a,b)=>a+b,0);
+            const totalPuroDI = (flujo.auxiliares['Flujo Puro Después de Impuestos'] || []).reduce((a,b)=>a+b,0);
+            const totalPuroAI = (flujo.auxiliares['Flujo Puro Antes de Impuestos'] || []).reduce((a,b)=>a+b,0);
+
+            const renderKpiCard=(l,v,f,p)=>`<div class="col-md-6 col-lg-3 mb-3"><div class="kpi-card ${p>=0?'positive':'negative'}"><div class="kpi-value">${f(v)}</div><div class="kpi-label">${l}</div></div></div>`;
+
+            const totalVentas = (flujo.ingresos['Ingresos del Proyecto'] || []).reduce((a, b) => a + b, 0);
+            const totalUnidades = getUnidadesResidencialesCount();
+            
+            const ingresosForTable = [];
+            Object.entries(flujo.ingresos).forEach(([name, data]) => {
+                if (!name.toLowerCase().includes('crédito')) {
+                    ingresosForTable.push({ name, total: data.reduce((a, b) => a + b, 0), type: 'ingreso' });
+                }
+            });
+
+            const egresosForTable = [];
+            const egresoConfig = [
+                { key: 'Terreno' },
+                { key: 'Construcción (Anticipo)' },
+                { key: 'Construcción (Estados de pago)' },
+                { key: 'Construcción (Dev. Retención)' },
+                ...params.costosVariables.map(c => ({ key: c.item })),
+                ...params.costosUnidad.map(c => ({ key: c.item })),
+                ...params.otrosCostos.map(c => ({ key: c.item })),
+                { key: 'Comisión de Ventas' },
+                { key: 'Intereses Crédito', displayName: 'Costo financiero' },
+                { key: 'IVA a Pagar' },
+                { key: 'Renta' }
+            ];
+
+            for (const config of egresoConfig) {
+                const data = flujo.egresos[config.key];
+                if (data) {
+                    const total = data.reduce((a, b) => a + b, 0);
+                    if (Math.abs(total) > 0.001) {
+                        egresosForTable.push({ name: config.displayName || config.key, total, type: 'egreso' });
+                    }
+                }
+            }
+
+            const totalCostosEnTabla = egresosForTable.reduce((sum, item) => sum + item.total, 0);
+            
+            const renderRow = (item) => {
+                const pctVentas = totalVentas > 0 ? item.total / totalVentas : 0;
+                const porUnidad = totalUnidades > 0 ? item.total / totalUnidades : 0;
+                
+                let pctCostosContent = '-';
+                if (item.type === 'egreso') {
+                    const pctCostos = totalCostosEnTabla > 0 ? item.total / totalCostosEnTabla : 0;
+                    pctCostosContent = formatPercent(pctCostos, 1);
+                } else if (item.name === 'Ingresos del Proyecto') {
+                    const pctIngresoVsCosto = totalCostosEnTabla > 0 ? item.total / totalCostosEnTabla : 0;
+                    pctCostosContent = formatPercent(pctIngresoVsCosto, 1);
+                }
+
+                return `<tr>
+                    <td class="text-start">${item.name}</td>
+                    <td class="text-end">${formatCurrency(item.total, 0)}</td>
+                    <td class="text-end">${formatPercent(pctVentas, 1)}</td>
+                    <td class="text-end">${pctCostosContent}</td>
+                    <td class="text-end">${formatCurrency(porUnidad, 1)}</td>
+                </tr>`;
+            };
+
+            const totalIngresosEnTabla = ingresosForTable.reduce((sum, item) => sum + item.total, 0);
+            const totalIngresosPctVentas = totalVentas > 0 ? totalIngresosEnTabla / totalVentas : 0;
+            const totalIngresosPorUnidad = totalUnidades > 0 ? totalIngresosEnTabla / totalUnidades : 0;
+            
+            const totalCostosPctVentas = totalVentas > 0 ? totalCostosEnTabla / totalVentas : 0;
+            const totalCostosPorUnidad = totalUnidades > 0 ? totalCostosEnTabla / totalUnidades : 0;
+
+            let summaryTableHtml = `
+                <div class="card mt-4" id="summary-table-card">
+                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                        <span>Ingresos y Egresos</span>
+                        <button class="btn btn-sm btn-light copy-table-btn" data-table-target="#summary-table-card .table" title="Copiar tabla para Excel">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" style="max-height: none;">
+                            <table class="table table-sm table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-start">Ítem</th>
+                                        <th class="text-end">Total (<span data-unit="currency">${params.currency}</span>)</th>
+                                        <th class="text-end">% Ventas</th>
+                                        <th class="text-end">% Costo</th>
+                                        <th class="text-end">(<span data-unit="currency">${params.currency}</span>)/Unidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="bg-secondary bg-opacity-10 fw-bold"><td colspan="5" class="text-start">INGRESOS</td></tr>
+                                    ${ingresosForTable.map(renderRow).join('')}
+                                    <tr class="table-group-divider fw-bold">
+                                        <td class="text-start">Total Ingresos</td>
+                                        <td class="text-end">${formatCurrency(totalIngresosEnTabla, 0)}</td>
+                                        <td class="text-end">${formatPercent(totalIngresosPctVentas, 1)}</td>
+                                        <td class="text-end">-</td>
+                                        <td class="text-end">${formatCurrency(totalIngresosPorUnidad, 1)}</td>
+                                    </tr>
+                                    <tr class="bg-secondary bg-opacity-10 fw-bold"><td colspan="5" class="text-start">EGRESOS</td></tr>
+                                    ${egresosForTable.map(renderRow).join('')}
+                                    <tr class="table-group-divider fw-bold">
+                                        <td class="text-start">Total Egresos</td>
+                                        <td class="text-end">${formatCurrency(totalCostosEnTabla, 0)}</td>
+                                        <td class="text-end">${formatPercent(totalCostosPctVentas, 1)}</td>
+                                        <td class="text-end">${formatPercent(1, 1)}</td>
+                                        <td class="text-end">${formatCurrency(totalCostosPorUnidad, 1)}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-group-divider fw-bold bg-light">
+                                        <td class="text-start">Margen Financiado (Después Imp.)</td>
+                                        <td class="text-end">${formatCurrency(totalFinanciadoDI, 0)}</td>
+                                        <td class="text-end">${formatPercent(totalVentas > 0 ? totalFinanciadoDI / totalVentas : 0, 1)}</td>
+                                        <td class="text-end">-</td>
+                                        <td class="text-end">${formatCurrency(totalUnidades > 0 ? totalFinanciadoDI / totalUnidades : 0, 1)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header fw-bold">
+                        Resumen de Indicadores
+                    </div>
+                    <div class="card-body">
+                        <div class="row mt-4 justify-content-center">
+                            ${renderKpiCard('TIR Financiado (Antes Imp.)', tirFinanciadoAI, (v) => formatPercent(v, 1), tirFinanciadoAI)}
+                            ${renderKpiCard('Margen Financiado (Antes Imp.)', totalFinanciadoAI, (v) => formatCurrency(v, 0), totalFinanciadoAI)}
+                            ${renderKpiCard('TIR Puro (Antes Imp.)', tirPuroAI, (v) => formatPercent(v, 1), tirPuroAI)}
+                            ${renderKpiCard('Margen Puro (Antes Imp.)', totalPuroAI, (v) => formatCurrency(v, 0), totalPuroAI)}
+                        </div>
+                        <div class="row mt-3 justify-content-center">
+                            ${renderKpiCard('TIR Financiado (Después Imp.)', tirFinanciadoDI, (v) => formatPercent(v, 1), tirFinanciadoDI)}
+                            ${renderKpiCard('Margen Financiado (Después Imp.)', totalFinanciadoDI, (v) => formatCurrency(v, 0), totalFinanciadoDI)}
+                            ${renderKpiCard('TIR Puro (Después Imp.)', tirPuroDI, (v) => formatPercent(v, 1), tirPuroDI)}
+                            ${renderKpiCard('Margen Puro (Después Imp.)', totalPuroDI, (v) => formatCurrency(v, 0), totalPuroDI)}
+                        </div>
+                    </div>
+                </div>
+                ${summaryTableHtml}
+            `;
+        };
+        function generateCsvString(decimalSeparator = '.') {
+            const table = document.querySelector('.cashflow-table');
+            if (!table) return '';
+            let csvContent = [];
+            
+            const headerRows = table.querySelectorAll('thead tr');
+            headerRows.forEach(headerRow => {
+                const headers = Array.from(headerRow.querySelectorAll('th')).map(th => `"${th.textContent.trim()}"`);
+                csvContent.push(headers.join(';'));
+            });
+
+            const bodyRows = table.querySelectorAll('tbody > tr');
+            bodyRows.forEach(row => {
+                if(row.children.length <= 1) { 
+                    if(row.querySelector('td[colspan]')) { 
+                        csvContent.push(`"${row.textContent.trim()}"`);
+                    } else {
+                        csvContent.push('');
+                    }
+                    return;
+                }
+                let rowData = [];
+                const cells = row.querySelectorAll('td');
+                cells.forEach((cell, index) => {
+                    let cellText = cell.textContent.trim();
+                    if (index > 0) {
+                        const num = parseFormattedNumber(cellText);
+                        cellText = isNaN(num) ? '' : num.toFixed(2).replace('.', decimalSeparator);
+                    }
+                    rowData.push(`"${cellText}"`);
+                });
+                csvContent.push(rowData.join(';'));
+            });
+
+            return csvContent.join('\n');
+        }
+        function generateSummaryCsvString(decimalSeparator = ',', thousandsSeparator = '.') {
+            const table = document.querySelector('#summary-table-card table');
+            if (!table) return '';
+            let csvContent = [];
+
+            // Explicitly build header row
+            const headerCells = table.querySelectorAll('thead th');
+            const headerRow = Array.from(headerCells).map(th => `"${th.textContent.trim()}"`).join(';');
+            csvContent.push(headerRow);
+
+            const formatNumberForCsv = (value, decimals) => {
+                return new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals,
+                    useGrouping: false
+                }).format(value).replace('.', decimalSeparator);
+            };
+
+            // Process body and footer rows
+            table.querySelectorAll('tbody tr, tfoot tr').forEach(row => {
+                let rowData = [];
+                // Handle section headers like "INGRESOS"
+                if (row.children.length === 1 && row.querySelector('td[colspan]')) {
+                    rowData.push(`"${row.textContent.trim()}"`);
+                } else {
+                    row.querySelectorAll('td').forEach((cell) => {
+                        let cellText = cell.textContent.trim();
+                        if (cell.classList.contains('text-end')) {
+                            if (cellText.includes('%')) {
+                                const num = parseFormattedNumber(cellText.replace('%', '')) / 100;
+                                cellText = isNaN(num) ? '' : formatNumberForCsv(num, 3);
+                            } else if (cellText !== '-') {
+                                const num = parseFormattedNumber(cellText);
+                                cellText = isNaN(num) ? '' : formatNumberForCsv(num, 2);
+                            }
+                        }
+                        rowData.push(`"${cellText}"`);
+                    });
+                }
+                csvContent.push(rowData.join(';'));
+            });
+
+            return csvContent.join('\n');
+        }
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([`\uFEFF${content}`], { type: mimeType });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        function initiateFlowCsvDownloads(projectName) {
+            const csvContentComma = generateCsvString(',');
+            downloadFile(csvContentComma, `flujo_caja_${projectName}_coma.csv`, 'text/csv;charset=utf-8;');
+            const csvContentPeriod = generateCsvString('.');
+            downloadFile(csvContentPeriod, `flujo_caja_${projectName}_punto.csv`, 'text/csv;charset=utf-8;');
+        }
+        function initiateSummaryCsvDownloads(projectName) {
+            const csvContentComma = generateSummaryCsvString(',', '.');
+            downloadFile(csvContentComma, `resumen_${projectName}_coma.csv`, 'text/csv;charset=utf-8;');
+            const csvContentPeriod = generateSummaryCsvString('.', ',');
+            downloadFile(csvContentPeriod, `resumen_${projectName}_punto.csv`, 'text/csv;charset=utf-8;');
+        }
+        function updateDomBeforeSave() { document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], input[type="range"]').forEach(input => { input.setAttribute('value', input.value); }); document.querySelectorAll('select').forEach(select => { select.querySelectorAll('option').forEach(option => { option.removeAttribute('selected'); }); if (select.selectedIndex > -1) { select.options[select.selectedIndex].setAttribute('selected', ''); } }); document.body.setAttribute('data-is-saved', 'true'); }
+        
+       async function generateAndDownloadAll() {
+            const saveBtn = document.getElementById('save-model-btn');
+            const originalBtnText = saveBtn.innerHTML;
+            
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generando...`;
+
+            try {
+                const projectName = document.getElementById('projectName').value;
+                const safeProjectName = projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'modelo';
+                const now = new Date();
+                const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
+                const baseFilename = `${safeProjectName}_${dateStr}_${timeStr}`;
+
+                updateDomBeforeSave(); 
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnText;
+                const currentHtml = document.documentElement.outerHTML;
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generando...`;
+                downloadFile(currentHtml, `${baseFilename}.html`, 'text/html;charset=utf-8;');
+                document.body.removeAttribute('data-is-saved');
+
+                initiateFlowCsvDownloads(baseFilename);
+                initiateSummaryCsvDownloads(baseFilename);
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const margin = 10;
+                const headerHeight = 10;
+                const headerY = 7;
+
+                const addPdfHeader = (pdfInstance) => {
+                    const pdfWidth = pdfInstance.internal.pageSize.getWidth();
+                    pdfInstance.setFillColor('#f8f9fa');
+                    pdfInstance.setDrawColor('#dee2e6');
+                    pdfInstance.setLineWidth(0.2);
+                    pdfInstance.rect(margin, headerY, pdfWidth - margin * 2, headerHeight, 'FD');
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('es-CL');
+                    const timeStr = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+                    const headerText = `Modelador inmobiliario  |  Proyecto: ${projectName}  |  ${dateStr} ${timeStr}`;
+                    pdfInstance.setFontSize(9);
+                    pdfInstance.setFont(undefined, 'bold');
+                    pdfInstance.setTextColor('#212529');
+                    const textY = headerY + (headerHeight / 2);
+                    pdfInstance.text(headerText, margin + 3, textY, { baseline: 'middle' });
+                    pdfInstance.setFont(undefined, 'normal');
+                };
+
+                const addContentAsImageToPage = async (pdfInstance, contentElement) => {
+                    const canvas = await html2canvas(contentElement, { scale: 2, useCORS: true, allowTaint: true, scrollX: 0, scrollY: -window.scrollY });
+                    const pdfWidth = pdfInstance.internal.pageSize.getWidth();
+                    const pdfHeight = pdfInstance.internal.pageSize.getHeight();
+                    const contentStartY = headerY + headerHeight + 3;
+                    const contentWidth = pdfWidth - margin * 2;
+                    const contentHeight = pdfHeight - contentStartY - margin;
+                    const ratio = canvas.width / canvas.height;
+                    let imgWidth = contentWidth;
+                    let imgHeight = imgWidth / ratio;
+                    if (imgHeight > contentHeight) {
+                        imgHeight = contentHeight;
+                        imgWidth = imgHeight * ratio;
+                    }
+                    const x = (pdfWidth - imgWidth) / 2;
+                    pdfInstance.addImage(canvas.toDataURL('image/png'), 'PNG', x, contentStartY, imgWidth, imgHeight);
+                };
+                
+                const paramsTabBtn = document.getElementById('params-tab-btn');
+                bootstrap.Tab.getOrCreateInstance(paramsTabBtn).show();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                addPdfHeader(pdf);
+                await addContentAsImageToPage(pdf, document.getElementById('params'));
+                
+                pdf.addPage('p', 'mm', 'a4');
+                const evalTabBtn = document.getElementById('eval-tab-btn');
+                bootstrap.Tab.getOrCreateInstance(evalTabBtn).show();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                addPdfHeader(pdf);
+                await addContentAsImageToPage(pdf, document.getElementById('charts-container'));
+
+                pdf.addPage('p', 'mm', 'a4');
+                const resumenTabBtn = document.getElementById('resumen-tab-btn');
+                bootstrap.Tab.getOrCreateInstance(resumenTabBtn).show();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                addPdfHeader(pdf);
+                await addContentAsImageToPage(pdf, document.getElementById('resumen'));
+                
+                pdf.save(`${baseFilename}_reporte.pdf`);
+
+            } catch (error) {
+                console.error("Error durante la generación de archivos:", error);
+                alert("Ocurrió un error al generar los archivos. Revise la consola para más detalles.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnText;
+                bootstrap.Tab.getOrCreateInstance(document.getElementById('params-tab-btn')).show();
+            }
+        }
+
+        function drawSCurve(kValue) {
+            const canvas = document.getElementById('curvaSGraph');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+
+            if (kValue <= 1) {
+                 ctx.lineTo(width, 0);
+            } else {
+                for (let i = 0; i <= width; i++) {
+                    const t = i / width;
+                    const y = 1 / (1 + Math.exp(-kValue * (t - 0.5)));
+                    ctx.lineTo(i, height - (y * height));
+                }
+            }
+            
+            ctx.strokeStyle = '#0d6efd';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function updateTimelineSlider(inputElement) {
+            if (!inputElement || !inputElement.id) return;
+            const sliderInfo = timelineSliders[inputElement.id];
+            if (sliderInfo) {
+                const { slider, handle } = sliderInfo;
+                const currentValue = slider.get();
+                const newValue = Number(inputElement.value);
+                
+                if (Array.isArray(currentValue)) {
+                    if (currentValue[handle] !== newValue) {
+                        const newValues = [...currentValue];
+                        newValues[handle] = newValue;
+                        slider.set(newValues);
+                    }
+                } else {
+                    if (currentValue !== newValue) {
+                        slider.set(newValue);
+                    }
+                }
+            }
+        }
+
+        paramsTab.addEventListener('input', e => {
+            if (e.target.name === 'porcentajeIngreso') {
+                updateIngresosEtapasPercentage(e.target);
+            }
+            if (e.target.id === 'curvaSParam') {
+                const kValue = e.target.value;
+                document.getElementById('curvaSValue').textContent = kValue;
+                drawSCurve(kValue);
+                updateTimelineSlider(e.target);
+            }
+        });
+        
+        paramsTab.addEventListener('focusin', e => {
+             if (e.target.name === 'porcentajeIngreso') {
+                e.target.dataset.previousValue = e.target.value;
+            }
+        });
+
+        paramsTab.addEventListener('blur', (e) => { 
+            if (e.target.matches('[data-format="number"]')) { 
+                formatInputAsCurrency(e.target); 
+                updateAllFastUI();
+            } 
+        }, true);
+
+        paramsTab.addEventListener('change', e => {
+            if (e.target.matches('select, input')) {
+                updateAllFastUI();
+            }
+            updateTimelineSlider(e.target);
+            debouncedUpdateAllOutputs();
+        });
+        
+        document.getElementById('add-unidad').addEventListener('click', () => { addUnidadRow(); debouncedUpdateAllOutputs(); });
+        document.getElementById('add-costo').addEventListener('click', () => { addCostoRow(); debouncedUpdateAllOutputs(); });
+        document.getElementById('add-costo-variable').addEventListener('click', () => { addCostoVariableRow(); debouncedUpdateAllOutputs(); });
+        document.getElementById('add-costo-unidad').addEventListener('click', () => { addCostoUnidadRow(); debouncedUpdateAllOutputs(); });
+        document.getElementById('add-ingreso-etapa').addEventListener('click', () => { addIngresoEtapaRow(); debouncedUpdateAllOutputs(); });
+
+        document.getElementById('precioTerreno').addEventListener('input', updateValorFromPrecio);
+        document.getElementById('valorTerrenoM2').addEventListener('input', updatePrecioFromValor);
+        document.getElementById('superficieTerreno').addEventListener('input', updatePrecioFromValor);
+
+        currencySelect.addEventListener('change', () => {
+             updateAllFastUI();
+             debouncedUpdateAllOutputs();
+        });
+        
+        document.getElementById('save-model-btn').addEventListener('click', generateAndDownloadAll);
+
+        const evalTabBtn = document.getElementById('eval-tab-btn');
+        evalTabBtn.addEventListener('shown.bs.tab', () => {
+            // Force charts to resize and redraw when tab is shown, which is crucial for saved HTML files
+            if (charts.flujoPuroChart) charts.flujoPuroChart.resize();
+            if (charts.flujoMensualChart) charts.flujoMensualChart.resize();
+            if (charts.flujoAcumuladoChart) charts.flujoAcumuladoChart.resize();
+            // Adjust the simulation panel height after charts have their final size
+            adjustSimHeight();
+        });
+        window.addEventListener('resize', debounce(adjustSimHeight, 200));
+
+        function copyTableToClipboard(button) {
+            const tableSelector = button.dataset.tableTarget;
+            const table = document.querySelector(tableSelector);
+            if (!table) return;
+
+            const tsvContent = Array.from(table.querySelectorAll('tr')).map(row => {
+                const cells = Array.from(row.querySelectorAll('th, td'));
+                // If a row is a full-width header (like INGRESOS), handle it specially
+                if (cells.length === 1 && cells[0].hasAttribute('colspan')) {
+                    return `"${cells[0].textContent.trim().replace(/"/g, '""')}"`;
+                }
+                // Skip empty visual separator rows
+                if (cells.length > 1 && cells.every(c => c.textContent.trim() === '')) {
+                    return null;
+                }
+                return cells.map(cell => {
+                    // Clean up text content for TSV
+                    return `"${cell.textContent.trim().replace(/"/g, '""')}"`;
+                }).join('\t'); // Use tab as separator for Excel
+            }).filter(row => row !== null).join('\n');
+
+            navigator.clipboard.writeText(tsvContent).then(() => {
+                const originalContent = button.innerHTML;
+                const originalTitle = button.title;
+                button.innerHTML = '<i class="bi bi-check-lg"></i> Copiado';
+                button.title = 'Copiado!';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-light');
+                button.disabled = true;
+                setTimeout(() => {
+                    button.innerHTML = originalContent;
+                    button.title = originalTitle;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-light');
+                    button.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar la tabla: ', err);
+                alert('No se pudo copiar la tabla.');
+            });
+        }
+
+        document.body.addEventListener('click', function(e) {
+            const button = e.target.closest('.copy-table-btn');
+            if (button) {
+                copyTableToClipboard(button);
+            }
+        });
+
+        // --- INICIALIZACIÓN DE LA PÁGINA ---
+
+        if (document.body.getAttribute('data-is-saved') !== 'true') {
+            document.getElementById('fechaInicio').valueAsDate = new Date();
+            
+            addUnidadRow({tipo: 'departamento', nombre: '2D1B', cantidad: 100, superficie: '50,0', precio: '2500', velocidad: '5,0' });
+            addUnidadRow({tipo: 'casa', nombre: '3D2B', cantidad: 50, superficie: '55,0', precio: '3500', velocidad: '3,0' });
+            addUnidadRow({tipo: 'bodega', nombre: 'Bodsubt', cantidad: 120, superficie: '5,0', precio: '120', velocidad: '10,0' });
+            addUnidadRow({tipo: 'est_sup', nombre: 'Techado', cantidad: 50, superficie: '12,5', precio: '180', velocidad: '8,0' });
+            addUnidadRow({tipo: 'est_sub', nombre: 'Tándem', cantidad: 100, superficie: '12,5', precio: '300', velocidad: '6,0' });
+            addUnidadRow({tipo: 'otro', nombre: 'Local Comercial', cantidad: 3, superficie: '40,0', precio: '2500', velocidad: '0,1' });
+
+            addIngresoEtapaRow({ porcentaje: '3,00', descripcion: "Anticipos", inicio: 10, fin: 35 });
+            addIngresoEtapaRow({ porcentaje: '33,00', descripcion: "Etapa 1", inicio: 24, fin: 30 });
+            addIngresoEtapaRow({ porcentaje: '49,00', descripcion: "Etapa 2", inicio: 28, fin: 35 });
+            addIngresoEtapaRow({ porcentaje: '15,00', descripcion: "Reposiciones", inicio: 24, fin: 35 });
+
+            addCostoVariableRow({ item: 'Administración', porcentaje: '4,00', inicio: 1, fin: 40 });
+            addCostoVariableRow({ item: 'Estructuración', porcentaje: '1,50', inicio: 6, fin: 6 });
+            addCostoVariableRow({ item: 'Publicidad', porcentaje: '0,80', inicio: 9, fin: 30 });
+            
+            addCostoUnidadRow({ item: 'Proyectos previos', costo: '80,0', inicio: 1, fin: 14 });
+            addCostoUnidadRow({ item: 'Proyectos y permisos obra', costo: '40,0', inicio: 12, fin: 30 });
+
+            addCostoRow({ item: 'Empalmes', monto: '3000', inicio: 18, fin: 22 });
+            addCostoRow({ item: 'Demolición', monto: '1500', inicio: 4, fin: 5 });
+        }
+        
+        document.querySelectorAll('[data-format="number"]').forEach(input => formatInputAsCurrency(input));
+        
+        drawSCurve(document.getElementById('curvaSParam').value);
+        updateValorFromPrecio();
+        updateAllFastUI();
+        updateAllOutputs();
+
+        function handleExportJSON() {
+            try {
+                const params = getParams();
+                const jsonContent = JSON.stringify(params, null, 2);
+                const projectName = params.projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'modelo';
+                downloadFile(jsonContent, `parametros_${projectName}.json`, 'application/json;charset=utf-8;');
+
+            } catch (error) {
+                console.error("Error al exportar los parámetros a JSON:", error);
+                alert("No se pudieron exportar los parámetros. Revise la consola.");
+            }
+        }
+        
+        function handleImportJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonContent = e.target.result;
+                    const params = JSON.parse(jsonContent);
+                    
+                    if (!params || typeof params.unidades === 'undefined' || typeof params.projectName === 'undefined') {
+                        throw new Error("El archivo JSON no contiene la estructura de parámetros esperada.");
+                    }
+
+                    loadParamsFromJSON(params);
+                    alert("Parámetros importados con éxito.");
+
+                } catch (error) {
+                    console.error("Error al importar el archivo JSON:", error);
+                    alert("El archivo JSON no tiene el formato correcto o está dañado.");
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function loadParamsFromJSON(params) {
+            unidadesTbody.innerHTML = '';
+            otrosCostosTbody.innerHTML = '';
+            costosVariablesTbody.innerHTML = '';
+            costosUnidadTbody.innerHTML = '';
+            ingresosEtapasTbody.innerHTML = '';
+            unidadCounter = costoCounter = costoVariableCounter = costoUnidadCounter = ingresoEtapaCounter = 0;
+            
+            const setFieldValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (el.dataset.format === 'number' && typeof value === 'number') {
+                        el.value = String(value).replace('.', ',');
+                    } else {
+                        el.value = value;
+                    }
+                }
+            };
+            
+            setFieldValue('projectName', params.projectName);
+            setFieldValue('currency', params.currency);
+            setFieldValue('discountRate', params.discountRate * 100);
+            setFieldValue('taxRate', params.taxRate * 100);
+            setFieldValue('iva', params.iva * 100);
+            setFieldValue('fechaInicio', params.fechaInicio);
+            setFieldValue('precioTerreno', params.terreno.precio);
+            setFieldValue('superficieTerreno', params.terreno.superficie);
+            setFieldValue('mesCompraTerreno', params.mesCompraTerreno);
+            setFieldValue('superficieLosaSobre', params.construccion.superficieLosaSobre);
+            setFieldValue('superficieLosaBajo', params.construccion.superficieLosaBajo);
+            setFieldValue('superficieUrbanizacion', params.construccion.superficieUrbanizacion);
+            setFieldValue('costoM2Sobre', params.construccion.costoM2Sobre);
+            setFieldValue('costoM2Bajo', params.construccion.costoM2Bajo);
+            setFieldValue('costoM2Urbanizacion', params.construccion.costoM2Urbanizacion);
+            setFieldValue('porcAnticipo', params.construccion.anticipo * 100);
+            setFieldValue('porcRetencion', params.construccion.retencion * 100);
+            setFieldValue('mesInicioConstruccion', params.mesInicioConstruccion);
+            setFieldValue('mesTerminoConstruccion', params.mesTerminoConstruccion);
+            setFieldValue('curvaSParam', params.construccion.curvaSParam);
+            setFieldValue('montoFinanciamiento', params.financiamiento.monto);
+            setFieldValue('tasaInteresAnual', params.financiamiento.tasa * 100);
+            setFieldValue('cuotaAlzamiento', params.financiamiento.cuotaAlzamiento * 100);
+            setFieldValue('comisionCierre', params.comisionVentas.cierre * 100);
+            setFieldValue('comisionEscritura', params.comisionVentas.escritura * 100);
+            setFieldValue('comisionRecuperacion', params.comisionVentas.recuperacion * 100);
+
+            const toCommaString = (obj, key) => {
+                if (obj && typeof obj[key] === 'number') {
+                    obj[key] = String(obj[key]).replace('.', ',');
+                }
+            };
+            
+            params.unidades.forEach(d => {
+                toCommaString(d, 'precio');
+                toCommaString(d, 'superficie');
+                toCommaString(d, 'velocidad');
+                addUnidadRow(d);
+            });
+            params.otrosCostos.forEach(d => {
+                toCommaString(d, 'monto');
+                addCostoRow(d);
+            });
+            params.costosUnidad.forEach(d => {
+                toCommaString(d, 'costo');
+                addCostoUnidadRow(d);
+            });
+            params.costosVariables.forEach(d => {
+                const porcentajeConComa = String(d.porcentaje * 100).replace('.', ',');
+                addCostoVariableRow({ ...d, porcentaje: porcentajeConComa });
+            });
+            params.ingresosEtapas.forEach(d => {
+                const porcentajeConComa = String(d.porcentaje * 100).replace('.', ',');
+                addIngresoEtapaRow({ ...d, porcentaje: porcentajeConComa });
+            });
+
+            document.querySelectorAll('[data-format="number"]').forEach(formatInputAsCurrency);
+            updateAllFastUI();
+            updateAllOutputs();
+        }
+
+        document.getElementById('export-model-btn').addEventListener('click', handleExportJSON);
+        document.getElementById('import-file-input').addEventListener('change', handleImportJSON);
+    });
+    </script>
+</body>
+</html>
